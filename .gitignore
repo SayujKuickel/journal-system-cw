@@ -1,0 +1,61 @@
+```
+# Build results
+bin/
+obj/
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# .NET / MSBuild
+*.cache
+*.log
+*.tmp
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# MAUI / Xamarin
+**/platforms/
+**/AppPackages/
+**/BundleArtifacts/
+**/*.keystore
+**/*.jks
+
+# Android
+**/android/
+**/AndroidManifest.xml
+**/build/
+**/.gradle/
+
+# iOS / MacCatalyst
+**/*.ipa
+**/*.dSYM/
+**/*.xcuserstate
+**/*.xcworkspace/
+**/Pods/
+
+# Windows
+**/AppPackages/
+**/BundleArtifacts/
+**/*.appx
+**/*.msix
+**/*.msixbundle
+
+# Publish
+publish/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+appsettings.*.json
+secrets.json
+```
+
+Use this as-is for a **.NET MAUI Blazor Hybrid** repository.
