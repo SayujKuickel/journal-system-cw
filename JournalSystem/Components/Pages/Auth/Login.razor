@@ -1,0 +1,52 @@
+﻿@using JournalSystem.Components.Layout
+
+@page "/"
+@layout AuthLayout
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="d-flex align-center justify-center" Style="min-height:100vh;">
+    <MudPaper Elevation="1" Class="pa-6 rounded-xl" Style="width:100%; max-width:420px;">
+        <h3>Enter Password to unlock</h3>
+
+        <div style="margin-top:12px;">
+            <label for="pin">PIN</label><br />
+            <input id="pin"
+                   type="password"
+                   @bind="pin"
+                   @bind:event="oninput"
+                   style="width:100%; padding:8px; margin-top:4px; border:1px solid #000;" />
+        </div>
+
+        <MudButton Class="mt-4"
+                   Variant="Variant.Filled"
+                   Color="Color.Secondary"
+                   FullWidth="true"
+                   OnClick="Unlock">
+            Unlock
+        </MudButton>
+
+
+        @if (!string.IsNullOrEmpty(error))
+        {
+            <div style="color:red; margin-top:12px; font-size:0.85rem;">
+                @error
+            </div>
+        }
+    </MudPaper>
+</MudContainer>
+
+@code {
+    [Inject] NavigationManager Nav { get; set; } = default!;
+
+    string pin = string.Empty;
+    string error = string.Empty;
+
+    Task Unlock()
+    {
+        if (pin == "0000")
+            Nav.NavigateTo("/journal");
+        else
+            error = "Invalid PIN.";
+
+        return Task.CompletedTask;
+    }
+}

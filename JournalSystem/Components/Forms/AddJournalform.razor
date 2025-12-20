@@ -1,0 +1,67 @@
+﻿@using JournalSystem.Models
+
+<div class="popup-backdrop" @onclick="CloseIfBackdrop">
+    <div class="popup-shell" @onclick:stopPropagation="true">
+
+        <!-- Center editor card -->
+        <div class="editor-card">
+            <div class="editor-head">
+                <div>
+                    <input class="title-input"
+                           placeholder="Journal Title"
+                           @bind="entry.Title"
+                           @bind:event="oninput" />
+
+                    <div class="date-text">@entry.EntryDate.ToString("yyyy/MM/dd")</div>
+                </div>
+
+                <select class="mood-select" @bind="entry.PrimaryMood">
+                    @foreach (var mood in Enum.GetValues<MoodCategory>())
+                    {
+                        <option value="@mood">@mood</option>
+                    }
+                </select>
+            </div>
+
+
+            <textarea class="content-area"
+                      placeholder="Write here..."
+                      rows="14"
+                      @bind="entry.Content"
+                      @bind:event="oninput"></textarea>
+
+            <div class="actions">
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           OnClick="Submit">
+                    Add
+                </MudButton>
+
+                <MudButton Variant="Variant.Outlined"
+                           OnClick="OnClose">
+                    Cancel
+                </MudButton>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    [Parameter] public List<JournalEntry> Entries { get; set; } = default!;
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    JournalEntry entry = new()
+    {
+        EntryDate = DateTime.Today,
+        PrimaryMood = MoodCategory.Neutral
+    };
+
+    void Submit()
+    {
+        Entries.Add(entry);
+        OnClose.InvokeAsync();
+    }
+
+    void CloseIfBackdrop() => OnClose.InvokeAsync();
+}

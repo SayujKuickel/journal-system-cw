@@ -1,0 +1,103 @@
+﻿@page "/journal"
+@using JournalSystem.Models
+@using JournalSystem.Components.Forms
+
+<MudContainer Class="mt-8">
+    <div class="d-flex justify-space-between align-center mb-4">
+        <MudText Typo="Typo.h5">Journals</MudText>
+
+        <div>
+            <input type="text" placeholder="Search..." @bind="search" @bind:event="oninput" style="padding:6px 10px; border:1px solid #000; border-radius:4px;" />
+
+            <MudButton Variant="Variant.Outlined" OnClick="() => showForm = true">
+                Add Journal
+            </MudButton>
+        </div>  
+    </div>
+
+
+    @if (!FilteredEntries.Any())
+    {
+        <div>
+            @if (string.IsNullOrWhiteSpace(search))
+            {
+                <MudText>No journal entries yet.</MudText>
+            }
+            else
+            {
+                <p>Nothing matches your search.</p>
+            }
+        </div>
+    }
+    else
+    {
+        <MudGrid>
+            @foreach (var item in FilteredEntries)
+            {
+                <MudItem xs="6" sm="3">
+                    <MudPaper Elevation="1" Class="pa-4 mb-3 rounded-lg">
+                        <MudText Typo="Typo.subtitle1">@item.Title</MudText>
+                        <MudText Typo="Typo.caption">
+                            @item.EntryDate.ToString("yyyy-MM-dd") · @item.PrimaryMood
+                        </MudText>
+
+                        <MudText Class="mt-2">
+                            @item.Content
+                        </MudText>
+
+                        @if (item.Tags.Any())
+                        {
+                            <MudStack Row="true" Spacing="1" Class="mt-2">
+                                @foreach (var tag in item.Tags)
+                                {
+                                    <span>@tag</span>
+                                }
+                            </MudStack>
+                        }
+
+                        <MudButton Variant="Variant.Text" Color="Color.Error" Class="mt-2" OnClick="@(() => Delete(item))">
+                            Delete
+                        </MudButton>
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+
+    }
+</MudContainer>
+
+@if (showForm)
+{
+    <AddJournalform Entries="entries" OnClose="CloseForm" />
+}
+
+
+@code {
+    List<JournalEntry> entries = new()
+    {
+        new JournalEntry
+        {
+            EntryDate = new DateTime(2025,12,19),
+            Title = "Suru ko entry",
+            Content = "this my first entry.",
+            PrimaryMood = MoodCategory.Positive,
+            Tags = new() { "cool", "happy" }
+        }
+    };
+
+    IEnumerable<JournalEntry> FilteredEntries => string.IsNullOrWhiteSpace(search)
+        ? entries
+        : entries.Where(e => e.Title.Contains(search, StringComparison.OrdinalIgnoreCase));
+
+    void Delete(JournalEntry item)
+    {
+        entries.Remove(item);
+    }
+
+    // search
+    string search = string.Empty;
+
+    // forms handling
+    bool showForm;
+    void CloseForm() => showForm = false;
+}

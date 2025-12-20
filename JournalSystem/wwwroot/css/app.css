@@ -86,3 +86,32 @@ h1:focus {
         padding-left: env(safe-area-inset-left);
     }
 }
+
+.popup-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.4);
+    display: grid;
+    place-items: center;
+}
+
+.popup {
+    background: white;
+    padding: 16px;
+    width: 320px;
+    border-radius: 6px;
+}
+
+    .popup input,
+    .popup textarea,
+    .popup select {
+        width: 100%;
+        margin-top: 8px;
+    }
+
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 12px;
+}
