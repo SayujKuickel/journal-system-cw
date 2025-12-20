@@ -1,4 +1,3 @@
-```
 # Build results
 bin/
 obj/
@@ -56,6 +55,3 @@ Thumbs.db
 # Secrets
 appsettings.*.json
 secrets.json
-```
-
-Use this as-is for a **.NET MAUI Blazor Hybrid** repository.
