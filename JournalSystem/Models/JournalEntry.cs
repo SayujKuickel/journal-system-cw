@@ -13,6 +13,41 @@ namespace JournalSystem.Models
         Negative
     }
 
+    public enum JournalTag
+    {
+        Work,
+        Career,
+        Studies,
+        Family,
+        Friends,
+        Relationships,
+        Health,
+        Fitness,
+        PersonalGrowth,
+        SelfCare,
+        Hobbies,
+        Travel,
+        Nature,
+        Finance,
+        Spirituality,
+        Birthday,
+        Holiday,
+        Vacation,
+        Celebration,
+        Exercise,
+        Reading,
+        Writing,
+        Cooking,
+        Meditation,
+        Yoga,
+        Music,
+        Shopping,
+        Parenting,
+        Projects,
+        Planning,
+        Reflection
+    }
+
     public class JournalEntry
     {
         public Guid Id { get; set; } = Guid.NewGuid();
@@ -21,7 +56,7 @@ namespace JournalSystem.Models
         public string Content { get; set; } = string.Empty;
         public MoodCategory PrimaryMood { get; set; }
         public List<string> SecondaryMoods { get; set; } = new();
-        public List<string> Tags { get; set; } = new();
+        public List<JournalTag> Tags { get; set; } = new();
         public string? Category { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

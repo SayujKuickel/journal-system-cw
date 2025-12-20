@@ -2,8 +2,6 @@
 
 <div class="popup-backdrop" @onclick="CloseIfBackdrop">
     <div class="popup-shell" @onclick:stopPropagation="true">
-
-        <!-- Center editor card -->
         <div class="editor-card">
             <div class="editor-head">
                 <div>
@@ -15,7 +13,7 @@
                     <div class="date-text">@entry.EntryDate.ToString("yyyy/MM/dd")</div>
                 </div>
 
-                <select class="mood-select" @bind="entry.PrimaryMood">
+                <select class="border-1 p-2" @bind="entry.PrimaryMood">
                     @foreach (var mood in Enum.GetValues<MoodCategory>())
                     {
                         <option value="@mood">@mood</option>
@@ -30,6 +28,29 @@
                       @bind="entry.Content"
                       @bind:event="oninput"></textarea>
 
+            <div>
+                <select class="border-1 p-2" @bind="selectedTag">
+                    <option value="">select</option>
+                    @foreach (JournalTag tag in Enum.GetValues<JournalTag>())
+                    {
+                        <option value="@tag">@tag</option>
+                    }
+                </select>
+
+                <MudButton OnClick="handleAddTag" Variant="Variant.Outlined" Color="Color.Primary">
+                    +
+                </MudButton>
+            </div>
+
+            <div class="d-flex gap-1 flex-wrap">
+                @foreach (var i in entry.Tags)
+                {
+                    <span class="p-1 bg-primary text-white rounded">
+                        @i
+                    </span>
+                }
+            </div>
+
             <div class="actions">
                 <MudButton Variant="Variant.Filled"
                            Color="Color.Primary"
@@ -41,6 +62,7 @@
                            OnClick="OnClose">
                     Cancel
                 </MudButton>
+
             </div>
         </div>
     </div>
@@ -50,6 +72,7 @@
 @code {
     [Parameter] public List<JournalEntry> Entries { get; set; } = default!;
     [Parameter] public EventCallback OnClose { get; set; }
+    JournalTag? selectedTag;
 
     JournalEntry entry = new()
     {
@@ -61,6 +84,16 @@
     {
         Entries.Add(entry);
         OnClose.InvokeAsync();
+    }
+
+    void handleAddTag()
+    {
+        if (selectedTag is null) return;
+
+        if (!entry.Tags.Contains(selectedTag.Value)) 
+            entry.Tags.Add(selectedTag.Value);
+
+        selectedTag = null;
     }
 
     void CloseIfBackdrop() => OnClose.InvokeAsync();
