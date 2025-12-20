@@ -21,7 +21,6 @@
                 </select>
             </div>
 
-
             <textarea class="content-area"
                       placeholder="Write here..."
                       rows="14"
@@ -45,7 +44,7 @@
             <div class="d-flex gap-1 flex-wrap">
                 @foreach (var i in entry.Tags)
                 {
-                    <span class="p-1 bg-primary text-white rounded">
+                    <span @onclick="() => HandleRemoveTag(i)" class="p-1 bg-primary text-white rounded tag-chip">
                         @i
                     </span>
                 }
@@ -67,6 +66,12 @@
         </div>
     </div>
 </div>
+
+<style>
+    .tag-chip:hover {
+        background-color: #f00;
+    }
+</style>
 
 
 @code {
@@ -95,6 +100,12 @@
 
         selectedTag = null;
     }
+
+    void HandleRemoveTag(JournalTag tag)
+    {
+        entry.Tags.Remove(tag);
+    }
+
 
     void CloseIfBackdrop() => OnClose.InvokeAsync();
 }

@@ -3,34 +3,32 @@
 @page "/"
 @layout AuthLayout
 
-<MudContainer MaxWidth="MaxWidth.Small" Class="d-flex align-center justify-center" Style="min-height:100vh;">
-    <MudPaper Elevation="1" Class="pa-6 rounded-xl" Style="width:100%; max-width:420px;">
-        <h3>Enter Password to unlock</h3>
+<MudContainer Class="d-flex align-center justify-center" Style="min-height:100vh;">
+    <MudPaper Class="pa-6 rounded-xl shadow-sm" Style="width:100%; max-width:420px;">
 
-        <div style="margin-top:12px;">
-            <label for="pin">PIN</label><br />
-            <input id="pin"
-                   type="password"
-                   @bind="pin"
-                   @bind:event="oninput"
-                   style="width:100%; padding:8px; margin-top:4px; border:1px solid #000;" />
-        </div>
+        <h3>Enter PIN</h3>
+
+        <input type="password"
+               placeholder="PIN"
+               @bind="pin"
+               @bind:event="oninput"
+               style="width:100%; padding:8px; margin-top:12px; border:1px solid #000;" />
 
         <MudButton Class="mt-4"
                    Variant="Variant.Filled"
-                   Color="Color.Secondary"
+                   Color="Color.Primary"
                    FullWidth="true"
                    OnClick="Unlock">
             Unlock
         </MudButton>
 
-
         @if (!string.IsNullOrEmpty(error))
         {
-            <div style="color:red; margin-top:12px; font-size:0.85rem;">
+            <div style="color:red; margin-top:12px;">
                 @error
             </div>
         }
+
     </MudPaper>
 </MudContainer>
 

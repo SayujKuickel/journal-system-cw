@@ -1,6 +1,7 @@
 ﻿@page "/journal"
 @using JournalSystem.Models
 @using JournalSystem.Components.Forms
+@using Bogus;
 
 <MudContainer Class="mt-8">
     <div class="d-flex justify-space-between align-center mb-4">
@@ -36,7 +37,7 @@
     else
     {
         <MudGrid>
-            @foreach (var item in FilteredEntries)
+            @foreach (var item in PaginatedEntries)
             {
                 <MudItem xs="6" sm="3">
                     <MudPaper Elevation="1" Class="pa-4 mb-3 rounded-lg">
@@ -45,7 +46,7 @@
                             @item.EntryDate.ToString("yyyy-MM-dd") · @item.PrimaryMood
                         </MudText>
 
-                        <MudText Class="mt-2">
+                        <MudText Class="mt-2 text-truncate">
                             @item.Content
                         </MudText>
 
@@ -69,6 +70,20 @@
             }
 
         </MudGrid>
+
+        <div class="d-flex align-items-center gap-2 mt-4">
+            <MudButton Variant="Variant.Outlined" Disabled="@(currPage  <= 1)" OnClick="PrevPage">
+                Prev
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" Disabled="@(currPage >= TotalPages)" OnClick="NextPage">
+                Next
+            </MudButton>
+
+
+            <span>Page @currPage / @TotalPages</span>
+
+        </div>
+
         
             @if (hasCreatedJournalToday)
             {
@@ -85,21 +100,21 @@
 
 
 @code {
-    List<JournalEntry> entries = new()
-    {
-        new JournalEntry
-        {
-            EntryDate = new DateTime(2025,12,19),
-            Title = "Suru ko entry",
-            Content = "this my first entry.",
-            PrimaryMood = MoodCategory.Positive,
-            Tags = new() { JournalTag.Career, JournalTag.SelfCare }
-        }
-    };
+    List<JournalEntry> entries = new();
+
+    int currPage = 1;
+    int perPage = 8;
+    int TotalPages => Math.Max(1, (int)Math.Ceiling(FilteredEntries.Count() / (double)perPage));
 
     IEnumerable<JournalEntry> FilteredEntries => string.IsNullOrWhiteSpace(search)
         ? entries
         : entries.Where(e => e.Title.Contains(search, StringComparison.OrdinalIgnoreCase));
+
+    IEnumerable<JournalEntry> PaginatedEntries =>
+        FilteredEntries
+            .OrderByDescending(e => e.EntryDate)
+            .Skip((currPage - 1) * perPage)
+            .Take(perPage);
 
     void Delete(JournalEntry item)
     {
@@ -114,4 +129,33 @@
     // forms handling
     bool showForm;
     void CloseForm() => showForm = false;
+
+
+    //  pagination
+
+    void NextPage()
+    {
+        if (currPage < TotalPages) currPage++;
+    }
+
+    void PrevPage()
+    {
+        if (currPage > 1) currPage--;
+    }
+
+
+    // fake data
+    protected override void OnInitialized()
+    {
+        var faker = new Faker<JournalEntry>()
+            .RuleFor(e => e.Id, f => Guid.NewGuid())
+            .RuleFor(e => e.EntryDate, f => f.Date.Recent(30).Date)
+            .RuleFor(e => e.Title, f => f.Lorem.Sentence(3))
+            .RuleFor(e => e.Content, f => f.Lorem.Paragraphs(2))
+            .RuleFor(e => e.PrimaryMood, f => f.PickRandom<MoodCategory>())
+            .RuleFor(e => e.CreatedAt, f => DateTime.UtcNow)
+            .RuleFor(e => e.UpdatedAt, f => DateTime.UtcNow);
+
+        entries = faker.Generate(10);
+    }
 }
