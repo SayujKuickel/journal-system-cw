@@ -19,7 +19,6 @@ project.fragment.lock.json
 artifacts/
 
 # MAUI / Xamarin
-**/platforms/
 **/AppPackages/
 **/BundleArtifacts/
 **/*.keystore
