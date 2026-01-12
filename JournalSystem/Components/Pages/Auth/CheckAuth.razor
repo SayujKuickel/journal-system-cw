@@ -1,0 +1,19 @@
+﻿@inject IPasswordService PasswordService
+@inject NavigationManager Nav
+
+@page "/"
+
+@code {
+	protected override async Task OnInitializedAsync()
+	{
+		bool isSet = await PasswordService.HasKey();
+		if (isSet)
+		{
+			Nav.NavigateTo("/login", true);
+		}
+		else
+		{
+			Nav.NavigateTo("/register", true);
+		}
+	}
+}

@@ -1,50 +1,66 @@
 ﻿@using JournalSystem.Components.Layout
 
-@page "/"
 @layout AuthLayout
+@page "/login"
+
+@inject NavigationManager Nav
+@inject IPasswordService PasswordService
+
 
 <MudContainer Class="d-flex align-center justify-center" Style="min-height:100vh;">
     <MudPaper Class="pa-6 rounded-xl shadow-sm" Style="width:100%; max-width:420px;">
 
-        <h3>Enter PIN</h3>
+        <EditForm Model="formModel" OnValidSubmit="Unlock">
 
-        <input type="password"
-               placeholder="PIN"
-               @bind="pin"
-               @bind:event="oninput"
-               style="width:100%; padding:8px; margin-top:12px; border:1px solid #000;" />
+            <h3>Enter PIN</h3>
 
-        <MudButton Class="mt-4"
-                   Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   FullWidth="true"
-                   OnClick="Unlock">
-            Unlock
-        </MudButton>
+            <InputText type="password"
+                   placeholder="PIN"
+                       @bind-Value="formModel.Pin"
+                   style="width:100%; padding:8px; margin-top:12px; border:1px solid #000;" />
 
-        @if (!string.IsNullOrEmpty(error))
-        {
-            <div style="color:red; margin-top:12px;">
-                @error
-            </div>
-        }
+            @if (Error != string.Empty)
+            {
+                <div class="error-message">@Error</div>
+            }
+
+            <MudButton Class="mt-4"
+                       Variant="Variant.Filled"
+                       Color="Color.Primary"
+                        ButtonType="ButtonType.Submit"
+                       FullWidth="true"
+            >
+                Unlock
+            </MudButton>
+
+        </EditForm>
 
     </MudPaper>
 </MudContainer>
 
 @code {
-    [Inject] NavigationManager Nav { get; set; } = default!;
 
-    string pin = string.Empty;
-    string error = string.Empty;
-
-    Task Unlock()
+    public class LoginFormModel
     {
-        if (pin == "0000")
-            Nav.NavigateTo("/journal");
-        else
-            error = "Invalid PIN.";
+        public string Pin { get; set; } = string.Empty;   
+    }
+    LoginFormModel formModel = new();
 
-        return Task.CompletedTask;
+    public String Error { get; set; } = string.Empty;
+
+
+    async Task Unlock()
+    {
+        try
+        {
+            await PasswordService.ValidatePassword(formModel.Pin);
+            Nav.NavigateTo("/journal", true);
+
+        }
+        catch (Exception e)
+        {
+			Error = e.Message;
+        }
+
     }
 }

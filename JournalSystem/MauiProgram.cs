@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using JournalSystem.Services;
+using JournalSystem.Services.Interface;
+using Microsoft.Extensions.Logging;
 using MudBlazor.Services;
 
 namespace JournalSystem
@@ -17,6 +19,9 @@ namespace JournalSystem
 
             builder.Services.AddMauiBlazorWebView();
             builder.Services.AddMudServices();
+            builder.Services.AddSingleton<IPasswordService, PasswordService>();
+            builder.Services.AddSingleton<IPreferenceService, PreferenceService>();
+
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();
     		builder.Logging.AddDebug();
