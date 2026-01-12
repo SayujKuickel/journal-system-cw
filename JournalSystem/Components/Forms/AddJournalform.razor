@@ -1,4 +1,5 @@
 ﻿@using JournalSystem.Models
+@inject IJSRuntime JS
 
 <div class="popup-backdrop" @onclick="CloseIfBackdrop">
     <div class="popup-shell" @onclick:stopPropagation="true">
@@ -21,11 +22,7 @@
                 </select>
             </div>
 
-            <textarea class="content-area"
-                      placeholder="Write here..."
-                      rows="14"
-                      @bind="entry.Content"
-                      @bind:event="oninput"></textarea>
+            <div id="editor" style="height: 12rem;"></div>
 
             <div>
                 <select class="border-1 p-2" @bind="selectedTag">
@@ -108,4 +105,20 @@
 
 
     void CloseIfBackdrop() => OnClose.InvokeAsync();
+
+    private string HtmlContent = "";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("initQuill", "editor");
+        }
+    }
+
+    private async Task Save()
+    {
+		HtmlContent = await JS.InvokeAsync<string>("getQuillHtml");
+    }
+
 }
