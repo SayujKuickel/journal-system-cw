@@ -21,6 +21,7 @@ namespace JournalSystem
             builder.Services.AddMudServices();
             builder.Services.AddSingleton<IPasswordService, PasswordService>();
             builder.Services.AddSingleton<IPreferenceService, PreferenceService>();
+            builder.Services.AddSingleton<IJournalService,JournalService>();
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();

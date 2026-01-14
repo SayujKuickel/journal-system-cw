@@ -1,4 +1,5 @@
-﻿@using JournalSystem.Components.Layout
+﻿@using JournalSystem.Components.Globals
+@using JournalSystem.Components.Layout
 
 @layout AuthLayout
 @page "/login"
@@ -7,42 +8,37 @@
 @inject IPasswordService PasswordService
 
 
-<MudContainer Class="d-flex align-center justify-center" Style="min-height:100vh;">
-    <MudPaper Class="pa-6 rounded-xl shadow-sm" Style="width:100%; max-width:420px;">
+<div class="min-h-screen flex items-center justify-center px-4">
+    <div class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
 
-        <EditForm Model="formModel" OnValidSubmit="Unlock">
+        <EditForm Model="formModel" OnValidSubmit="Unlock" class="space-y-4 p-4 rounded-lg border shadow">
 
-            <h3>Enter PIN</h3>
+            <h3 class="text-xl font-semibold text-center">Enter PIN</h3>
 
-            <InputText type="password"
-                   placeholder="PIN"
-                       @bind-Value="formModel.Pin"
-                   style="width:100%; padding:8px; margin-top:12px; border:1px solid #000;" />
+            <InputText type="password" placeholder="PIN" @bind-Value="formModel.Pin"
+                class="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30" />
 
             @if (Error != string.Empty)
             {
-                <div class="error-message">@Error</div>
+                <div class="text-sm text-red-600">@Error</div>
             }
 
-            <MudButton Class="mt-4"
-                       Variant="Variant.Filled"
-                       Color="Color.Primary"
-                        ButtonType="ButtonType.Submit"
-                       FullWidth="true"
-            >
+            <AppButton Type="submit" ClassName="w-full mt-4">
                 Unlock
-            </MudButton>
+            </AppButton>
+
+
 
         </EditForm>
 
-    </MudPaper>
-</MudContainer>
+    </div>
+</div>
 
 @code {
 
     public class LoginFormModel
     {
-        public string Pin { get; set; } = string.Empty;   
+        public string Pin { get; set; } = string.Empty;
     }
     LoginFormModel formModel = new();
 
@@ -55,11 +51,10 @@
         {
             await PasswordService.ValidatePassword(formModel.Pin);
             Nav.NavigateTo("/journal", true);
-
         }
         catch (Exception e)
         {
-			Error = e.Message;
+            Error = e.Message;
         }
 
     }
