@@ -8,7 +8,10 @@ namespace JournalSystem.Services.Interface
 {
     public interface IPreferenceService
     {
-        public void SetUsername(string username);
-        public  string GetUsername();
+        public void SetPreference(UserPreferences preference, string value);
+        public string GetPreference(UserPreferences preference);
+        public void TerminatePreference(UserPreferences preferences);
+        public void TerminateAllPreferences();
+        public string GetUsername();
     }
 }

@@ -1,25 +1,26 @@
-﻿<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
-    <MudPaper Elevation="1" Class="rounded-xl pa-3">
+<header class="bg-white border-b border-slate-200 shadow-sm">
+    <div class="max-w-6xl mx-auto flex items-center gap-4 px-4 py-3">
+        <div class="text-xl font-semibold text-slate-900">Journal System</div>
 
-        <MudStack Row="true" AlignItems="AlignItems.Center">
-            <MudText Typo="Typo.h6">Journal System</MudText>
+        <nav class="ml-auto flex gap-3 text-sm">
+            <NavLink href="/dashboard"
+                     class="px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition"
+                     ActiveClass="bg-slate-100 text-slate-900 font-semibold"
+                     Match="NavLinkMatch.All">
+                Dashboard
+            </NavLink>
 
-            <MudSpacer />
+            <NavLink href="/calendar"
+                     class="px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition"
+                     ActiveClass="bg-slate-100 text-slate-900 font-semibold">
+                Calendar
+            </NavLink>
 
-            <MudStack Row="true" Spacing="1">
-                <MudNavLink Href="/dashboard" Match="NavLinkMatch.All" Class="nav-item">
-                    Dashboard
-                </MudNavLink>
-
-                <MudNavLink Href="/calendar" Class="nav-item">
-                    Calendar
-                </MudNavLink>
-
-                <MudNavLink Href="/journal" Class="nav-item">
-                    Journal
-                </MudNavLink>
-            </MudStack>
-        </MudStack>
-
-    </MudPaper>
-</MudContainer>
+            <NavLink href="/journals"
+                     class="px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition"
+                     ActiveClass="bg-slate-100 text-slate-900 font-semibold">
+                Journal
+            </NavLink>
+        </nav>
+    </div>
+</header>

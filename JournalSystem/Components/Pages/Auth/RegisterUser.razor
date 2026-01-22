@@ -1,65 +1,54 @@
 @using JournalSystem.Components.Layout
-@inject IPasswordService PasswordService
-@inject IPreferenceService PreferenceService
-
+@using Microsoft.AspNetCore.Components.Forms
+@using System.ComponentModel.DataAnnotations
+@using JournalSystem.Services.Interface
+@inject IUserService UserService
 @inject NavigationManager Nav
 
 @layout AuthLayout
 
 @page "/register"
 
-
-<MudContainer Class="d-flex align-center justify-center" Style="min-height:100vh;">
-    <MudPaper Class="pa-6 rounded-xl shadow-sm" Style="width:100%; max-width:420px;">
-
+<div class="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-white to-slate-50">
+    <div class="w-full max-w-md bg-white border border-slate-200 rounded-3xl shadow-xl p-6">
         <EditForm Model="formModel" OnValidSubmit="Register">
+            <DataAnnotationsValidator />
+            <h3 class="text-2xl font-semibold text-slate-900">Create PIN</h3>
 
-            <h3>Create PIN</h3>
+            <div class="mt-4 space-y-3">
+                <InputText type="text" placeholder="Username" @bind-Value="formModel.Username"
+                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none" />
 
+                <InputText type="password" placeholder="PIN" @bind-Value="formModel.Pin"
+                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none" />
 
-            <InputText type="Username"
-                       placeholder="Confirm PIN"
-                       @bind-Value="formModel.Username"
-                       style="width:100%; padding:8px; margin-top:12px; border:1px solid #000;" />
-
-            <InputText type="password"
-                       placeholder="PIN"
-                       @bind-Value="formModel.Pin"
-                       style="width:100%; padding:8px; margin-top:12px; border:1px solid #000;" />
-
-            <InputText type="password"
-                       placeholder="Confirm PIN"
-                       @bind-Value="formModel.ConfirmPin"
-                       style="width:100%; padding:8px; margin-top:12px; border:1px solid #000;" />
-           
+                <InputText type="password" placeholder="Confirm PIN" @bind-Value="formModel.ConfirmPin"
+                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none" />
+            </div>
 
             @if (Error != string.Empty)
             {
-                <div class="error-message">@Error</div>
+                <div class="mt-3 text-sm font-medium text-red-600">@Error</div>
             }
 
-
-            <MudButton Class="mt-4"
-                       Variant="Variant.Filled"
-                       Color="Color.Primary"
-                       ButtonType="ButtonType.Submit"
-                       FullWidth="true">
+            <button type="submit"
+                class="mt-5 w-full rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold uppercase tracking-wide text-white transition duration-150 hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500">
                 Register
-            </MudButton>
-
+            </button>
         </EditForm>
-
-    </MudPaper>
-</MudContainer>
+    </div>
+</div>
 
 @code {
-
     public string Error { get; set; } = string.Empty;
 
     public class LoginFormModel
     {
+        [Required]
         public string Pin { get; set; } = string.Empty;
+        [Required]
         public string ConfirmPin { get; set; } = string.Empty;
+        [Required]
         public string Username { get; set; } = string.Empty;
     }
 
@@ -67,6 +56,16 @@
 
     async Task Register()
     {
+        Error = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(formModel.Username) ||
+        string.IsNullOrWhiteSpace(formModel.Pin) ||
+        string.IsNullOrWhiteSpace(formModel.ConfirmPin))
+        {
+            Error = "Username and PIN are required.";
+            return;
+        }
+
         if (formModel.Pin != formModel.ConfirmPin)
         {
             Error = "PINs do not match.";
@@ -75,14 +74,12 @@
 
         try
         {
-            PreferenceService.SetUsername(formModel.Username);
-            await PasswordService.SetKey(formModel.Pin);
-            Nav.NavigateTo("/login", true);
+            await UserService.CreateUser(formModel.Username, formModel.Pin);
+            Nav.NavigateTo(SiteRoutes.Login, true);
         }
         catch (Exception e)
-        {   
+        {
             Error = e.Message;
         }
-
     }
 }

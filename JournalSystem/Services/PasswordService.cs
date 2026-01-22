@@ -8,9 +8,12 @@ namespace JournalSystem.Services
 {
     public class PasswordService : IPasswordService
     {
+
+        private const string PASSKEY = "pass";
+
         public async Task<string> GetKey()
         {
-            return await SecureStorage.Default.GetAsync("password") ?? "";
+            return await SecureStorage.Default.GetAsync(PASSKEY) ?? "";
         }
 
         public async Task<bool> HasKey()
@@ -19,25 +22,38 @@ namespace JournalSystem.Services
             return currpass != "";
         }
 
-        public async Task SetKey
-            (string key)
+        public async Task SetKey(string key)
         {
             string currpass = await GetKey();
-            if(currpass != "")
+            if (currpass != "")
             {
                 throw new Exception("Password already set");
             }
 
-            await SecureStorage.Default.SetAsync("password", key);
+            await SecureStorage.Default.SetAsync(PASSKEY, key);
         }
 
         public async Task ValidatePassword(string password)
         {
             string currpass = await GetKey();
-            if(currpass != password)
+            if (currpass != password)
             {
                 throw new Exception("Invalid password");
             }
+        }
+
+        public bool TerminatePassword()
+        {
+            try
+            {
+                SecureStorage.Default.Remove(PASSKEY);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+
         }
     }
 }

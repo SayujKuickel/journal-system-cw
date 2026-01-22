@@ -1,13 +1,12 @@
 ﻿@using JournalSystem.Components.Globals
 @inherits LayoutComponentBase
 
-<div style="display:flex; min-height:100vh;">
-    <aside style="width:240px; flex:0 0 240px; border-right:1px solid #ddd; padding:12px;">
-        <Sidebar />
-    </aside>
-
-    <main style="flex:1; padding:16px;">
-        @Body
+<div class="flex h-screen overflow-hidden">
+    <Sidebar />
+    <main class="flex-1 overflow-y-auto scrollbar-hide">
+        <div class="max-w-[96rem] p-4">
+            @Body
+        </div>
     </main>
 </div>
 

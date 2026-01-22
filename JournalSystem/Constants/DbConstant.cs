@@ -1,4 +1,10 @@
-﻿public static class Constants
+using Microsoft.Maui.Storage;
+using System.IO;
+
+namespace JournalSystem.Constants;
+
+
+public static class DbConstant
 {
     public const string DatabaseFilename = "JournalSQLite.db3";
 

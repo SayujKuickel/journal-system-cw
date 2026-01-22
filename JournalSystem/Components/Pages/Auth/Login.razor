@@ -1,61 +1,60 @@
 ﻿@using JournalSystem.Components.Globals
 @using JournalSystem.Components.Layout
-
 @layout AuthLayout
 @page "/login"
-
 @inject NavigationManager Nav
 @inject IPasswordService PasswordService
-
+@inject IPreferenceService PreferenceService
 
 <div class="min-h-screen flex items-center justify-center px-4">
-    <div class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+        <EditForm Model="formModel" OnValidSubmit="Unlock" class="space-y-6">
+            <div class="space-y-2">
+                <h2 class="text-xl font-medium text-slate-900">
+                    Welcome Back, @PreferenceService.GetPreference(UserPreferences.Username)
+                </h2>
+                <p class="text-sm text-slate-600">Enter your PIN to continue</p>
+            </div>
 
-        <EditForm Model="formModel" OnValidSubmit="Unlock" class="space-y-4 p-4 rounded-lg border shadow">
+            <div class="space-y-2">
+                <InputText type="password" placeholder="PIN" @bind-Value="formModel.Pin"
+                    class="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-shadow" />
 
-            <h3 class="text-xl font-semibold text-center">Enter PIN</h3>
+                @if (!string.IsNullOrEmpty(Error))
+                {
+                    <p class="text-sm text-red-600">@Error</p>
+                }
+            </div>
 
-            <InputText type="password" placeholder="PIN" @bind-Value="formModel.Pin"
-                class="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30" />
-
-            @if (Error != string.Empty)
-            {
-                <div class="text-sm text-red-600">@Error</div>
-            }
-
-            <AppButton Type="submit" ClassName="w-full mt-4">
-                Unlock
-            </AppButton>
-
-
-
+            <button type="submit" class="w-fit">
+                <AppButton ClassName="w-full">
+                    Unlock
+                    <i class="fi fi-rr-sign-out-alt"></i>
+                </AppButton>
+            </button>
         </EditForm>
-
     </div>
 </div>
 
 @code {
-
     public class LoginFormModel
     {
         public string Pin { get; set; } = string.Empty;
     }
+
     LoginFormModel formModel = new();
-
-    public String Error { get; set; } = string.Empty;
-
+    public string Error { get; set; } = string.Empty;
 
     async Task Unlock()
     {
         try
         {
             await PasswordService.ValidatePassword(formModel.Pin);
-            Nav.NavigateTo("/journal", true);
+            Nav.NavigateTo(SiteRoutes.Journal, true);
         }
         catch (Exception e)
         {
             Error = e.Message;
         }
-
     }
 }

@@ -9,11 +9,11 @@
 		bool isSet = await PasswordService.HasKey();
 		if (isSet)
 		{
-			Nav.NavigateTo("/login", true);
+			Nav.NavigateTo(SiteRoutes.Login, true);
 		}
 		else
 		{
-			Nav.NavigateTo("/register", true);
+			Nav.NavigateTo(SiteRoutes.Register, true);
 		}
 	}
 }

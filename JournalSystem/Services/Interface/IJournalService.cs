@@ -9,9 +9,11 @@ namespace JournalSystem.Services.Interface
 {
     public interface IJournalService
     {
-        Task<List<JournalEntry>> GetItemsAsync();
+        Task<List<JournalEntry>> GetItemsAsync(int page = 0, int perPage = 10);
         Task<JournalEntry> GetItemAsync(Guid id);
+        Task<JournalEntry?> GetByDayAsync(DateTime day);
         Task<int> SaveItemAsync(JournalEntry item);
+        Task<int> UpdateItemAsync(JournalEntry item);
         Task<int> DeleteItemAsync(JournalEntry item);
     }
 }

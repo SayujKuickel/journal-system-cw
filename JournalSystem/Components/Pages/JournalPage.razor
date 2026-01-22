@@ -1,0 +1,60 @@
+@page "/journal"
+@inject IJournalService JournalService
+
+<section class="flex items-center justify-between gap-2">
+    <div class="flex items-center gap-2">
+        <input
+            class="w-full rounded-lg border border-slate-300 px-4 py-2 sm:w-sm text-slate-900 placeholder-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-shadow" />
+
+        <button popovertarget="my-popover">
+            <AppButton>
+                Filters
+                <i class="fi fi-rr-filter"></i>
+            </AppButton>
+        </button>
+    </div>
+
+    <div popover id="my-popover">Greetings, one and all!</div>
+
+    <a href="@SiteRoutes.AddJournal">
+        <AppButton Variant="secondary">
+            + Add Journal
+        </AppButton>
+    </a>
+</section>
+
+
+@if (entries is null)
+{
+    <p>Loading...</p>
+}
+else if (!entries.Any())
+{
+    <p>No items</p>
+}
+else
+{
+
+    <div class="mt-6 grid gap-4 lg:grid-cols-2">
+
+        @foreach (JournalEntry item in entries)
+        {
+            <JournalEntryCard Entry="item" />
+        }
+    </div>
+
+}
+
+
+@code {
+    List<JournalEntry>? entries;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        var items = await JournalService.GetItemsAsync();
+
+        entries = items ?? new List<JournalEntry>();
+    }
+
+}
