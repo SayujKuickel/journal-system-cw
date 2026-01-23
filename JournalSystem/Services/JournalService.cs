@@ -1,92 +1,109 @@
-﻿using JournalSystem.Constants;
-using JournalSystem.Models;
+﻿using JournalSystem.Models;
 using JournalSystem.Services.Interface;
 using SQLite;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace JournalSystem.Services
+namespace JournalSystem.Services;
+
+public class JournalService : IJournalService
 {
-    public class JournalService : IJournalService
+    private async Task<SQLiteAsyncConnection> Db()
+        => await DatabaseService.GetConnectionAsync();
+
+    public async Task<List<JournalEntry>> GetItemsAsync(int page = 0, int perPage = 10)
     {
-        private SQLiteAsyncConnection? db;
-        private bool isInitialized;
+        var safePage = Math.Max(0, page);
+        var safePerPage = Math.Max(1, perPage);
+        var offset = safePage * safePerPage;
 
-        private SQLiteAsyncConnection Connection =>
-            db ?? throw new InvalidOperationException("Database connection is not initialized.");
+        var db = await Db();
 
-        async Task Init()
+        return await db.Table<JournalEntry>()
+                       .OrderByDescending(e => e.EntryDate)
+                       .Skip(offset)
+                       .Take(safePerPage)
+                       .ToListAsync();
+    }
+
+    public async Task<JournalEntry?> GetItemAsync(Guid id)
+    {
+        var db = await Db();
+
+        return await db.Table<JournalEntry>().FirstOrDefaultAsync(i => i.Id == id);
+    }
+
+    public async Task<JournalEntry?> GetItemByDateAsync(DateTime date)
+    {
+        var db = await Db();
+        var dateOnly = date.Date;
+        var entries = await db.Table<JournalEntry>()
+                              .ToListAsync();
+        return entries.FirstOrDefault(e => e.EntryDate.Date == dateOnly);
+    }
+
+    public async Task<int> SaveItemAsync(JournalEntry item)
+    {
+        if (item.Id == Guid.Empty)
+            item.Id = Guid.NewGuid();
+
+        if (item.EntryDate == default)
+            item.EntryDate = DateTime.Now;
+
+        var db = await Db();
+        return await db.InsertAsync(item);
+    }
+
+    public async Task<int> UpdateItemAsync(JournalEntry item)
+    {
+        if (item.EntryDate == default)
+            item.EntryDate = DateTime.Now;
+
+        var db = await Db();
+        return await db.UpdateAsync(item);
+    }
+
+    public async Task<int> DeleteItemAsync(JournalEntry item)
+    {
+        var db = await Db();
+        return await db.DeleteAsync(item);
+    }
+
+    public async Task<int> SaveJournalEntry(JournalFormModel formData, string richText)
+    {
+        var entry = new JournalEntry
         {
-            if (isInitialized) return;
+            Id = Guid.NewGuid(),
+            Title = formData.Title,
+            RichText = richText,
+            EntryDate = formData.EntryDate == default ? DateTime.Now : formData.EntryDate,
+            PrimaryMood = formData.ChosenMoods.FirstOrDefault(),
+            Category = formData.Category,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
 
-            db = new SQLiteAsyncConnection(DbConstant.DatabasePath, DbConstant.Flags);
+        var db = await Db();
+        await db.InsertAsync(entry);
 
-            await db.CreateTableAsync<JournalEntry>();
-            isInitialized = true;
-        }
-
-        public async Task<List<JournalEntry>> GetItemsAsync(int page = 0, int perPage = 10)
+        // saving secondary Moods
+        foreach (var moodId in formData.ChosenMoods.Skip(1))
         {
-            await Init();
-            var safePage = page < 0 ? 0 : page;
-            var safePerPage = perPage <= 0 ? 10 : perPage;
-            var offset = safePage * safePerPage;
-
-            return await Connection.Table<JournalEntry>()
-                .OrderByDescending(e => e.EntryDate)
-                .Skip(offset)
-                .Take(safePerPage)
-                .ToListAsync();
-        }
-
-        public async Task<JournalEntry> GetItemAsync(Guid id)
-        {
-            await Init();
-            return await Connection.Table<JournalEntry>().Where(i => i.Id == id).FirstOrDefaultAsync();
-        }
-
-        public async Task<JournalEntry?> GetByDayAsync(DateTime day)
-        {
-            await Init();
-            var key = day.Date.ToString("yyyy-MM-dd");
-            return await Connection.Table<JournalEntry>()
-                .Where(e => e.EntryDay == key)
-                .FirstOrDefaultAsync();
-        }
-
-        public async Task<int> SaveItemAsync(JournalEntry item)
-        {
-            await Init();
-            if (item.EntryDate == default)
+            await db.InsertAsync(new JournalEntryMood
             {
-                item.EntryDate = DateTime.Now;
-            }
-
-            item.EntryDay = item.EntryDate.Date.ToString("yyyy-MM-dd");
-
-            return await Connection.InsertAsync(item);
+                JournalEntryId = entry.Id,
+                MoodId = moodId
+            });
         }
 
-        public async Task<int> UpdateItemAsync(JournalEntry item)
+        // Saving tags
+
+        foreach (var tagId in formData.ChosenTags)
         {
-            await Init();
-            if (item.EntryDate == default)
+            await db.InsertAsync(new JournalEntryTag
             {
-                item.EntryDate = DateTime.Now;
-            }
-
-            item.EntryDay = item.EntryDate.Date.ToString("yyyy-MM-dd");
-
-            return await Connection.UpdateAsync(item);
+                JournalEntryId = entry.Id,
+                TagId = tagId
+            });
         }
-
-        public async Task<int> DeleteItemAsync(JournalEntry item)
-        {
-            await Init();
-            return await Connection.DeleteAsync(item);
-        }
+        return 1;
     }
 }

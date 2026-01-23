@@ -9,6 +9,7 @@ public static class SiteRoutes
     // journal
     public const string Journal = "/journal";
     public const string AddJournal = "/add-journal";
+    public const string ViewJournal = "/view-journal";
     public const string Calendar = "/calendar";
     public const string Analytics = "/analytics";
     public const string Settings = "/settings";

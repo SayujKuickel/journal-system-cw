@@ -9,7 +9,7 @@ namespace JournalSystem.Services
     public class PasswordService : IPasswordService
     {
 
-        private const string PASSKEY = "pass";
+        private const string PASSKEY = "passw";
 
         public async Task<string> GetKey()
         {
@@ -42,18 +42,9 @@ namespace JournalSystem.Services
             }
         }
 
-        public bool TerminatePassword()
+        public void TerminatePassword()
         {
-            try
-            {
-                SecureStorage.Default.Remove(PASSKEY);
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-
+            SecureStorage.Default.Remove(PASSKEY);
         }
     }
 }

@@ -17,10 +17,17 @@ namespace JournalSystem
                 });
 
             builder.Services.AddMauiBlazorWebView();
+            // db
+            builder.Services.AddSingleton<DatabaseService>();
+            // user related
             builder.Services.AddSingleton<IPasswordService, PasswordService>();
             builder.Services.AddSingleton<IPreferenceService, PreferenceService>();
-            builder.Services.AddSingleton<IJournalService, JournalService>();
             builder.Services.AddSingleton<IUserService, UserService>();
+            // journalss
+            builder.Services.AddSingleton<IJournalService, JournalService>();
+            builder.Services.AddSingleton<ICategoryService, CategoryService>();
+            builder.Services.AddSingleton<IMoodService, MoodService>();
+            builder.Services.AddSingleton<ITagService, TagService>();
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();

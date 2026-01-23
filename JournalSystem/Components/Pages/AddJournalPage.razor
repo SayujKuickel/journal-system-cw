@@ -1,88 +1,257 @@
 @page "/add-journal"
+@using System.ComponentModel.DataAnnotations
+@using ABI.Windows.AI.MachineLearning
 
 @inject IJSRuntime JS
-@inject IJournalService JournalService
 @inject NavigationManager Nav
 
+@inject IJournalService JournalService
+@inject IMoodService MoodService
+@inject ITagService TagService
+@inject ICategoryService CategoryService
 
-<EditForm Model="formModel" OnValidSubmit="HandleSubmit">
+<style>
+    .ql-toolbar {
+        border-radius: 8px;
+        margin-bottom: 8px;
+    }
+</style>
+
+<header class="space-y-2">
+    <h1 class="text-4xl font-bold">
+        Creating new Journal
+    </h1>
+    <div class="text-sm text-slate-500">@formModel.EntryDate.ToString("yyyy/MM/dd")</div>
+</header>
+
+<EditForm Model="formModel" OnValidSubmit="HandleSubmit" class="space-y-3 grid grid-cols-3 gap-4">
     <DataAnnotationsValidator />
 
-    <div>
-        <label class="text-sm font-semibold text-slate-700">Date</label>
-        <div class="text-sm text-slate-500">@formModel.EntryDate.ToString("yyyy/MM/dd")</div>
-    </div>
+    <section class="col-span-2 space-y-4">
+        <div>
+            <label class="text-sm font-semibold text-slate-700">Title*</label>
+            <InputText
+                class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                @bind-Value="formModel.Title" />
+            <ValidationMessage class="text-sm text-destructive" For="@(() => formModel.Title)" />
+        </div>
 
-    <div>
-        <label class="text-sm font-semibold text-slate-700">Title</label>
-        <InputText
-            class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            @bind-Value="formModel.Title" />
-    </div>
-
-    <div>
-        <label class="text-sm font-semibold text-slate-700">Primary Mood</label>
-        <select
-            class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            @bind="formModel.PrimaryMood">
-            @foreach (var mood in MoodCatalog.All)
+        <div>
+            <label class="text-sm font-semibold text-slate-700">Content*</label>
+            <div id="editor" class="mt-2 rounded-lg border border-slate-200" style="height: 16rem;"></div>
+            @if (showRichTextError)
             {
-                <option value="@mood">@mood</option>
+                <div class="text-sm text-destructive">Content is required.</div>
             }
-        </select>
-    </div>
+        </div>
+    </section>
 
-    <div>
-        <label class="text-sm font-semibold text-slate-700">Content</label>
-        <div id="editor" class="mt-2 rounded-lg border border-slate-200" style="height: 16rem;"></div>
-    </div>
+    <aside class="flex flex-col justify-between">
+        <div class="space-y-2">
+            <section class="flex-1">
+                <label class="text-sm font-semibold text-slate-700">Category*</label>
+                <InputSelect @bind-Value="formModel.Category"
+                    class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                    <option value="0">Choose</option>
+                    @foreach (var item in categories)
+                    {
+                        <option value="@item.Id">@item.Name</option>
+                    }
+                </InputSelect>
+                <ValidationMessage class="text-sm text-destructive" For="@(() => formModel.Category)" />
+            </section>
 
-    <div>
-        <label class="text-sm font-semibold text-slate-700">Tags</label>
-        <div class="mt-2 flex flex-wrap items-center gap-2">
-            <select
-                class="w-full max-w-[14rem] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                @bind="selectedTag">
-                <option value="">select</option>
-                @foreach (var tag in TagCatalog.PredefinedTags)
-                {
-                    <option value="@tag">@tag</option>
-                }
-            </select>
-            <button type="button" class="border-0 bg-transparent p-0" @onclick="HandleAddTag">
-                <AppButton Variant="outline" ClassName="h-9">Add</AppButton>
+            <section>
+                <div class="flex items-end gap-2">
+                    <div class="flex-1">
+                        <label class="text-sm font-semibold text-slate-700">Mood*</label>
+                        <select @bind="currentMood"
+                            class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                            <option value="0">Choose</option>
+                            @foreach (var mood in moods)
+                            {
+                                if (!formModel.ChosenMoods.Contains(mood.Id))
+                                {
+                                    <option value="@mood.Id">@mood.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    @if (formModel.ChosenMoods.Count < 3)
+                    {
+                        <button type="button" @onclick="AddMood">
+                            <AppButton Variant="outline" ClassName="block py-3">
+                                <i class="fi fi-rr-plus scale-75"></i>
+                            </AppButton>
+                        </button>
+                    }
+                </div>
+
+                <p class="flex gap-1 flex-wrap mt-3">
+                    @foreach (var item in formModel.ChosenMoods.Select((id, index) => new { id, index }))
+                    {
+                        var mood = moods.FirstOrDefault(el => el.Id == item.id);
+                        if (mood != null)
+                        {
+                            <span
+                                class="px-2 bg-primary/20 border border-primary rounded-lg text-nowrap hover:bg-destructive hover:text-background cursor-pointer transition-all flex items-center gap-0.5"
+                                @onclick="() => RemoveMood(mood.Id)">
+                                @if (item.index == 0)
+                                {
+                                    <i class="fi fi-rr-crown text-primary"></i>
+                                }
+                                @mood.Name
+                            </span>
+                        }
+                    }
+                </p>
+                <ValidationMessage class="text-sm text-destructive" For="@(() => formModel.ChosenMoods)" />
+            </section>
+
+            <section>
+                <div class="flex items-end gap-2">
+                    <div class="flex-1">
+                        <label class="text-sm font-semibold text-slate-700">Tags</label>
+                        <select @bind="currentTag"
+                            class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                            <option value="0">Choose</option>
+                            @foreach (var tag in tags)
+                            {
+                                if (!formModel.ChosenTags.Contains(tag.Id))
+                                {
+                                    <option value="@tag.Id">@tag.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <button type="button" @onclick="AddTag">
+                        <AppButton Variant="outline" ClassName="block py-3">
+                            <i class="fi fi-rr-plus scale-75"></i>
+                        </AppButton>
+                    </button>
+                </div>
+
+                <p class="flex gap-x-2 gap-y-1.5 flex-wrap mt-3">
+                    @foreach (var tagId in formModel.ChosenTags)
+                    {
+                        var tag = tags.FirstOrDefault(el => el.Id == tagId);
+                        if (tag != null)
+                        {
+                            <span
+                                class="px-2 bg-primary/5 outline-2 outline-primary rounded-lg text-nowrap hover:bg-destructive hover:text-background cursor-pointer transition-all"
+                                @onclick="() => RemoveTag(tagId)">
+                                @tag.Name
+                            </span>
+                        }
+                    }
+                </p>
+                <ValidationMessage class="text-sm text-destructive" For="@(() => formModel.ChosenTags)" />
+            </section>
+        </div>
+
+        <div class="flex flex-wrap justify-end gap-3">
+            <button type="button" @onclick='() => Nav.NavigateTo(SiteRoutes.Journal)'>
+                <AppButton Variant="outline" ClassName="min-w-[8rem]">Cancel</AppButton>
+            </button>
+
+            <button type="submit">
+                <AppButton ClassName="min-w-[8rem]">Save</AppButton>
             </button>
         </div>
-
-        <div class="mt-3 flex flex-wrap gap-2">
-            @foreach (var tag in formModel.Tags)
-            {
-                <span class="cursor-pointer rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary"
-                    @onclick="@(() => HandleRemoveTag(tag))">
-                    @tag
-                </span>
-            }
-        </div>
-    </div>
-
-    <div class="flex flex-wrap gap-3">
-        <button type="submit" class="border-0 bg-transparent p-0">
-            <AppButton ClassName="min-w-[8rem]">Save</AppButton>
-        </button>
-        <button type="button" class="border-0 bg-transparent p-0" @onclick='() => Nav.NavigateTo("/journals")'>
-            <AppButton Variant="outline" ClassName="min-w-[8rem]">Cancel</AppButton>
-        </button>
-    </div>
+    </aside>
 </EditForm>
 
 @code {
-    JournalEntry formModel = new()
+    int currentMood = 0;
+
+    void AddMood()
+    {
+        if (currentMood != 0 && !formModel.ChosenMoods.Contains(currentMood) && formModel.ChosenMoods.Count < 3)
+        {
+            formModel.ChosenMoods.Add(currentMood);
+            currentMood = 0;
+        }
+    }
+
+    void RemoveMood(int id)
+    {
+        formModel.ChosenMoods.Remove(id);
+    }
+}
+
+@code {
+    int currentTag = 0;
+
+    void AddTag()
+    {
+        if (currentTag != 0 && !formModel.ChosenTags.Contains(currentTag))
+        {
+            formModel.ChosenTags.Add(currentTag);
+            currentTag = 0;
+        }
+    }
+
+    void RemoveTag(int id)
+    {
+        formModel.ChosenTags.Remove(id);
+    }
+}
+
+@code {
+    JournalFormModel formModel = new()
     {
         EntryDate = DateTime.Today,
-        PrimaryMood = Mood.Calm
     };
 
-    string? selectedTag;
+    bool showRichTextError = false;
+
+    async Task HandleSubmit()
+    {
+        var richText = await JS.InvokeAsync<string>("getQuillHtml");
+
+        if (string.IsNullOrWhiteSpace(richText))
+        {
+            showRichTextError = true;
+            return;
+        }
+
+        showRichTextError = false;
+
+        await JournalService.SaveJournalEntry(formModel, richText);
+        Nav.NavigateTo(SiteRoutes.Journal);
+    }
+}
+
+@code {
+    List<Mood> moods = [];
+    List<Tag> tags = [];
+    List<Category> categories = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        try
+        {
+
+            var existingEntry = await JournalService.GetItemByDateAsync(DateTime.Today);
+            if (existingEntry != null)
+            {
+                Nav.NavigateTo($"{SiteRoutes.ViewJournal}/{existingEntry.Id}");
+                return;
+            }
+        }
+        catch
+        {
+
+        }
+
+        moods = await MoodService.GetItemsAsync();
+        tags = await TagService.GetItemsAsync();
+        categories = await CategoryService.GetItemsAsync();
+
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -90,31 +259,5 @@
         {
             await JS.InvokeVoidAsync("initQuill", "editor");
         }
-    }
-
-    async Task HandleSubmit()
-    {
-        formModel.Content = await JS.InvokeAsync<string>("getQuillHtml");
-        await JournalService.SaveItemAsync(formModel);
-        Nav.NavigateTo("/journals");
-    }
-
-    void HandleAddTag()
-    {
-        if (string.IsNullOrWhiteSpace(selectedTag)) return;
-        var tag = TagCatalog.NormalizeTag(selectedTag);
-        if (string.IsNullOrWhiteSpace(tag)) return;
-
-        if (!formModel.Tags.Any(t => string.Equals(t, tag, StringComparison.OrdinalIgnoreCase)))
-        {
-            formModel.Tags.Add(tag);
-        }
-
-        selectedTag = string.Empty;
-    }
-
-    void HandleRemoveTag(string tag)
-    {
-        formModel.Tags.Remove(tag);
     }
 }
