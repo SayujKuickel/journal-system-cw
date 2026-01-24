@@ -10,7 +10,7 @@ public sealed class DatabaseService
 {
     private static SQLiteAsyncConnection? _db;
     private static readonly SemaphoreSlim _lock = new(1, 1);
-    private const string DB_NAME = "JournalSystem4.db";
+    private const string DB_NAME = "JournalSystem5.db";
 
     public static async Task<SQLiteAsyncConnection> GetConnectionAsync()
     {
@@ -141,7 +141,7 @@ public sealed class DatabaseService
                 .RuleFor(e => e.CreatedAt, f => f.Date.Past(1))
                 .RuleFor(e => e.UpdatedAt, (f, e) => e.CreatedAt);
 
-            var entries = entryFaker.Generate(6);
+            var entries = entryFaker.Generate(8);
 
             foreach (var entry in entries)
             {

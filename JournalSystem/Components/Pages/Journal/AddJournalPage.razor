@@ -33,9 +33,9 @@
     <div class="text-sm text-slate-500">@formModel.EntryDate.ToString("yyyy/MM/dd")</div>
 </header>
 
+
 <EditForm Model="formModel" OnValidSubmit="HandleSubmit" class="space-y-3 grid grid-cols-3 gap-4">
     <DataAnnotationsValidator />
-    <ValidationSummary />
 
     <section class="col-span-2 space-y-4">
         <div>
@@ -161,7 +161,10 @@
             </section>
         </div>
 
+        @* <ValidationSummary /> *@
+
         <div class="flex flex-wrap justify-end gap-3">
+
             <button type="button" @onclick='() => Nav.NavigateTo(SiteRoutes.Journal)'>
                 <AppButton Variant="outline" ClassName="min-w-[8rem]">Cancel</AppButton>
             </button>

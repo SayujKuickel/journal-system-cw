@@ -1,5 +1,19 @@
 @page "/settings"
+@inject IPreferenceService PreferenceService
 
 <h1 class="text-4xl font-bold">
     Settings
 </h1>
+
+<button @onclick="Terminate">
+    <AppButton>
+        Terminate preferences
+    </AppButton>
+</button>
+
+@code {
+    void Terminate()
+    {
+        PreferenceService.TerminateAllPreferences();
+    }
+}

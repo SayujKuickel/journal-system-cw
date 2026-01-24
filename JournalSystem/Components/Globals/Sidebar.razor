@@ -7,39 +7,43 @@
                 class="aspect-square rounded-full size-10 border-2 border-primary grid place-items-center bg-primary text-primary-foreground font-bold text-lg">
                 @PreferenceService.GetPreference(UserPreferences.Username)[0]
             </div>
-            <div class="flex flex-col">
-                <h1 class="text-sm font-bold leading-none text-slate-900">
-                    @PreferenceService.GetPreference(UserPreferences.Username)
-                </h1>
-            </div>
+            <h1 class="text-sm font-bold text-slate-900">
+                @PreferenceService.GetPreference(UserPreferences.Username)
+            </h1>
         </div>
+
         <nav class="flex flex-col gap-2">
-            <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary"
-                href="@SiteRoutes.Journal">
+            <a href="@SiteRoutes.Journal"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-primary/10 hover:text-primary transition-all">
                 <i class="fi fi-rr-book-bookmark"></i>
-                <p class="text-sm font-bold">Journals</p>
+                <p class="text-sm font-medium">Journals</p>
             </a>
-            <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100 transition-all"
-                href="@SiteRoutes.Calendar">
+
+            <a href="@SiteRoutes.Calendar"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-primary/10 hover:text-primary transition-all">
                 <i class="fi fi-rr-calendar-day"></i>
                 <p class="text-sm font-medium">Calendar</p>
             </a>
-            <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100 transition-all"
-                href="@SiteRoutes.Analytics">
+
+            <a href="@SiteRoutes.Analytics"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-primary/10 hover:text-primary transition-all">
                 <i class="fi fi-rr-chart-histogram"></i>
                 <p class="text-sm font-medium">Analytics</p>
             </a>
-            <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100 transition-all"
-                href="@SiteRoutes.Settings">
+
+            <a href="@SiteRoutes.Settings"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-primary/10 hover:text-primary transition-all">
                 <i class="fi fi-rr-settings-sliders"></i>
                 <p class="text-sm font-medium">Settings</p>
             </a>
         </nav>
+
     </div>
 
     <a href="@SiteRoutes.AddJournal" class="w-full block">
         <AppButton ClassName="w-full">
-            <i class="fi fi-rr-add-document"></i> <span>New Entry</span>
+            <i class="fi fi-rr-add-document"></i>
+            <span>New Entry</span>
         </AppButton>
     </a>
 </aside>
