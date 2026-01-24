@@ -1,4 +1,5 @@
 @page "/add-journal"
+@page "/add-journal/{Id}"
 @using System.ComponentModel.DataAnnotations
 @using ABI.Windows.AI.MachineLearning
 
@@ -19,13 +20,22 @@
 
 <header class="space-y-2">
     <h1 class="text-4xl font-bold">
-        Creating new Journal
+        @if (Guid.TryParse(Id, out var guid))
+        {
+            <span>Editing Journal Entry</span>
+        }
+        else
+        {
+            <span>Creating new Journal </span>
+        }
+
     </h1>
     <div class="text-sm text-slate-500">@formModel.EntryDate.ToString("yyyy/MM/dd")</div>
 </header>
 
 <EditForm Model="formModel" OnValidSubmit="HandleSubmit" class="space-y-3 grid grid-cols-3 gap-4">
     <DataAnnotationsValidator />
+    <ValidationSummary />
 
     <section class="col-span-2 space-y-4">
         <div>
@@ -38,7 +48,7 @@
 
         <div>
             <label class="text-sm font-semibold text-slate-700">Content*</label>
-            <div id="editor" class="mt-2 rounded-lg border border-slate-200" style="height: 16rem;"></div>
+            <div id="editor" class="mt-2 rounded-lg border border-slate-200" style="height: 32rem;"></div>
             @if (showRichTextError)
             {
                 <div class="text-sm text-destructive">Content is required.</div>
@@ -163,6 +173,7 @@
     </aside>
 </EditForm>
 
+@* Mood handler *@
 @code {
     int currentMood = 0;
 
@@ -181,6 +192,7 @@
     }
 }
 
+@* Tag handler *@
 @code {
     int currentTag = 0;
 
@@ -199,6 +211,7 @@
     }
 }
 
+@* Form handler *@
 @code {
     JournalFormModel formModel = new()
     {
@@ -219,37 +232,80 @@
 
         showRichTextError = false;
 
-        await JournalService.SaveJournalEntry(formModel, richText);
+        // EDIT MODE
+        if (Guid.TryParse(Id, out var guid))
+        {
+            await JournalService.UpdateJournalEntry(guid, formModel, richText);
+        }
+        // CREATE MODE
+        else
+        {
+            await JournalService.SaveJournalEntry(formModel, richText);
+        }
+
         Nav.NavigateTo(SiteRoutes.Journal);
     }
+
 }
 
+@* initialzier *@
 @code {
+    [Parameter] public string Id { get; set; } = string.Empty;
+
+    @*  *@
     List<Mood> moods = [];
     List<Tag> tags = [];
     List<Category> categories = [];
 
+    @* quill *@
+    string? pendingRichText;
+    bool quillReady;
+
+    @*  *@
+
     protected override async Task OnInitializedAsync()
     {
-
-        try
-        {
-
-            var existingEntry = await JournalService.GetItemByDateAsync(DateTime.Today);
-            if (existingEntry != null)
-            {
-                Nav.NavigateTo($"{SiteRoutes.ViewJournal}/{existingEntry.Id}");
-                return;
-            }
-        }
-        catch
-        {
-
-        }
-
         moods = await MoodService.GetItemsAsync();
         tags = await TagService.GetItemsAsync();
         categories = await CategoryService.GetItemsAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        formModel = new JournalFormModel
+        {
+            EntryDate = DateTime.Today
+        };
+
+        // edit mode
+        if (Guid.TryParse(Id, out var guid))
+        {
+            var stored = await JournalService.GetItemAsync(guid);
+            if (stored == null)
+            {
+                Nav.NavigateTo(SiteRoutes.Journal);
+                return;
+            }
+
+            var storedMoods = await JournalService.GetSecondaryMoodsAsync(guid);
+            var storedTags = await JournalService.GetTagsAsync(guid);
+
+            formModel.Title = stored.Title;
+            formModel.Category = stored.Category;
+            formModel.ChosenMoods = [stored.PrimaryMood, .. storedMoods];
+            formModel.ChosenTags = storedTags;
+            pendingRichText = stored.RichText;
+
+            return;
+        }
+
+        // create mode
+        var existingEntry = await JournalService.GetItemByDateAsync(DateTime.Today);
+        if (existingEntry != null)
+        {
+            Nav.NavigateTo($"{SiteRoutes.AddJournal}/{existingEntry.Id}");
+            return;
+        }
 
     }
 
@@ -258,6 +314,13 @@
         if (firstRender)
         {
             await JS.InvokeVoidAsync("initQuill", "editor");
+            quillReady = true;
+
+            if (pendingRichText != null)
+            {
+                await JS.InvokeVoidAsync("setQuillHtml", pendingRichText);
+                pendingRichText = null;
+            }
         }
     }
 }

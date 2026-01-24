@@ -1,0 +1,157 @@
+@page "/view-journal/{Id}"
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+@inject IJournalService JournalService
+@inject IMoodService MoodService
+@inject ITagService TagService
+@inject ICategoryService CategoryService
+
+@if (journal == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <article class="space-y-4">
+        <header class="space-y-2">
+            <p class="text-sm text-slate-500">@journal.EntryDate.ToString("yyyy/MM/dd")</p>
+
+            <h1 class="text-4xl font-bold max-w-3xl">@journal.Title</h1>
+        </header>
+
+
+        <section class="grid grid-cols-4 gap-4">
+            <div class="col-span-3">
+                @((MarkupString)journal.RichText)
+            </div>
+            <aside>
+
+                <section class="space-y-4 p-4 bg-secondary rounded-lg border border-border h-fit">
+                    @if (category != null)
+                    {
+                        <div>
+                            <label class="text-sm font-semibold text-muted mb-2 block">Category</label>
+                            <p> @category.Name </p>
+                        </div>
+                    }
+
+                    <div>
+                        <label class="text-sm font-semibold text-muted mb-2 block">Primary Mood</label>
+                        <MoodPill Mood="primaryMood" />
+                    </div>
+                    @if (secondaryMoods.Any())
+                    {
+
+                        <div>
+                            <label class="text-sm font-semibold text-muted mb-2 block">Other Moods</label>
+
+                            <p class="flex gap-x-2 gap-y-1.5 flex-wrap">
+                                @foreach (int mood in secondaryMoods)
+                                {
+                                    var el = allMoods.FirstOrDefault(el => el.Id == mood);
+
+                                    if (el != null)
+                                    {
+                                        <MoodPill Mood="el" />
+                                    }
+                                }
+                            </p>
+                        </div>
+                    }
+
+                    @if (tags.Any())
+                    {
+                        <div>
+                            <label class="text-sm font-semibold text-muted mb-2 block">Tags</label>
+                            <p class="flex gap-x-2 gap-y-1.5 flex-wrap">
+                                @foreach (int tag in tags)
+                                {
+                                    var el = allTags.FirstOrDefault(el => el.Id == tag);
+                                    if (el != null)
+                                    {
+                                        <span
+                                            class="px-2 bg-primary/5 outline-2 outline-primary rounded-lg text-nowrap text-sm">#@el.Name</span>
+                                    }
+                                }
+                            </p>
+
+                        </div>
+                    }
+                </section>
+
+                <section class="flex items-center gap-2 mt-4">
+                    <a class="flex-1 block" href="@SiteRoutes.AddJournal/@journal.Id">
+                        <AppButton Variant="outline" ClassName="flex-1">
+                            <i class="fi fi-rr-edit"></i>
+                            Edit
+                        </AppButton>
+                    </a>
+
+                    <button class="flex-1" @onclick="HandleDelete">
+                        <AppButton Variant="destructive" ClassName="flex-1">
+                            <i class="fi fi-rr-trash"></i>Delete
+                        </AppButton>
+                    </button>
+                </section>
+            </aside>
+
+        </section>
+    </article>
+}
+
+@code {
+    [Parameter]
+    public string Id { get; set; } = string.Empty;
+
+    JournalEntry journal = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Guid.TryParse(Id, out var guid))
+        {
+            journal = await JournalService.GetItemAsync(guid);
+
+            if (journal == null)
+            {
+                Nav.NavigateTo(SiteRoutes.Journal);
+                return;
+            }
+
+            allMoods = await MoodService.GetItemsAsync();
+            allTags = await TagService.GetItemsAsync();
+            allCategories = await CategoryService.GetItemsAsync();
+            secondaryMoods = await JournalService.GetSecondaryMoodsAsync(guid);
+            tags = await JournalService.GetTagsAsync(guid);
+        }
+        else
+        {
+            Nav.NavigateTo(SiteRoutes.Journal);
+        }
+    }
+}
+
+@code {
+    async void HandleDelete()
+    {
+        var confirm = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this entry?");
+
+        if (!confirm) return;
+
+        await JournalService.DeleteItemAsync(journal);
+        Nav.NavigateTo(SiteRoutes.Journal);
+    }
+}
+
+@code {
+    List<Mood> allMoods = [];
+    List<Tag> allTags = [];
+    List<Category> allCategories = [];
+    List<JournalEntry> entries = [];
+
+    Mood? primaryMood => allMoods.FirstOrDefault(m => m.Id == journal.PrimaryMood);
+    Category? category => allCategories.FirstOrDefault(c => c.Id == journal.Category);
+
+    List<int> secondaryMoods = new();
+    List<int> tags = new();
+}

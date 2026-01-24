@@ -10,7 +10,7 @@ public sealed class DatabaseService
 {
     private static SQLiteAsyncConnection? _db;
     private static readonly SemaphoreSlim _lock = new(1, 1);
-    private const string DB_NAME = "JournalSystem.db";
+    private const string DB_NAME = "JournalSystem4.db";
 
     public static async Task<SQLiteAsyncConnection> GetConnectionAsync()
     {
@@ -120,6 +120,56 @@ public sealed class DatabaseService
 
         }
 
+        #endregion
+
+
+        #region Journal Entry Seed
+        if (await conn.Table<JournalEntry>().CountAsync() == 0)
+        {
+            var faker = new Bogus.Faker();
+            var moodIds = (await conn.Table<Mood>().ToListAsync()).Select(m => m.Id).ToList();
+            var categoryIds = (await conn.Table<Category>().ToListAsync()).Select(c => c.Id).ToList();
+            var tagIds = (await conn.Table<Tag>().ToListAsync()).Select(t => t.Id).ToList();
+
+            var entryFaker = new Bogus.Faker<JournalEntry>()
+                .RuleFor(e => e.Id, f => Guid.NewGuid())
+                .RuleFor(e => e.EntryDate, f => f.Date.Between(DateTime.Now.AddYears(-1), DateTime.Now))
+                .RuleFor(e => e.Title, f => f.Lorem.Sentence(3, 5).TrimEnd('.'))
+                .RuleFor(e => e.RichText, f => $"<p>{f.Lorem.Paragraphs(4, 30)}</p>")
+                .RuleFor(e => e.PrimaryMood, f => f.PickRandom(moodIds))
+                .RuleFor(e => e.Category, f => f.PickRandom(categoryIds))
+                .RuleFor(e => e.CreatedAt, f => f.Date.Past(1))
+                .RuleFor(e => e.UpdatedAt, (f, e) => e.CreatedAt);
+
+            var entries = entryFaker.Generate(6);
+
+            foreach (var entry in entries)
+            {
+                await conn.InsertAsync(entry);
+
+                var secondaryMoodCount = faker.Random.Int(1, 3);
+                var secondaryMoods = faker.PickRandom(moodIds.Where(m => m != entry.PrimaryMood), secondaryMoodCount);
+                foreach (var moodId in secondaryMoods)
+                {
+                    await conn.InsertAsync(new JournalEntryMood
+                    {
+                        JournalEntryId = entry.Id,
+                        MoodId = moodId
+                    });
+                }
+
+                var tagCount = faker.Random.Int(2, 5);
+                var selectedTags = faker.PickRandom(tagIds, tagCount);
+                foreach (var tagId in selectedTags)
+                {
+                    await conn.InsertAsync(new JournalEntryTag
+                    {
+                        JournalEntryId = entry.Id,
+                        TagId = tagId
+                    });
+                }
+            }
+        }
         #endregion
 
 

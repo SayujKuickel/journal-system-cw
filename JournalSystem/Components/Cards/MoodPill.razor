@@ -1,0 +1,30 @@
+@using JournalSystem.Models
+
+@if (Mood != null)
+{
+    <div class="flex items-center gap-2 px-2 py-1 rounded-lg w-fit @GetMoodColor(Mood.Type)">
+        <i class="@GetMoodIcon(Mood.Type) flex text-base"></i>
+        <span class="text-xs font-semibold uppercase">@Mood.Name</span>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Mood? Mood { get; set; }
+
+    static string GetMoodIcon(Mood.MoodType value) => value switch
+    {
+        Mood.MoodType.Positive => "fi fi-rr-face-awesome",
+        Mood.MoodType.Neutral => "fi fi-rr-meh",
+        Mood.MoodType.Negative => "fi fi-rr-face-disappointed",
+        _ => "fi fi-rs-question-square"
+    };
+
+    static string GetMoodColor(Mood.MoodType value) => value switch
+    {
+        Mood.MoodType.Positive => "bg-green-50 text-green-600",
+        Mood.MoodType.Neutral => "bg-yellow-50 text-yellow-600",
+        Mood.MoodType.Negative => "bg-red-50 text-red-600",
+        _ => "bg-gray-50 text-gray-600"
+    };
+}

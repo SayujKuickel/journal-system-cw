@@ -1,0 +1,126 @@
+@page "/journal"
+@inject IJournalService JournalService
+@inject IMoodService MoodService
+@inject ITagService TagService
+@inject ICategoryService CategoryService
+
+<div class="space-y-4">
+
+    <h1 class="text-4xl font-bold">
+        Journals
+    </h1>
+
+    <section class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+            <input @oninput="HandleSearch" placeholder="Type here to search."
+                class="w-full rounded-lg border border-slate-300 px-4 py-2 sm:w-sm text-slate-900 placeholder-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-shadow" />
+
+            <button popovertarget="my-popover">
+                <AppButton>
+                    Filters
+                    <i class="fi fi-rr-filter"></i>
+                </AppButton>
+            </button>
+        </div>
+
+        <div popover id="my-popover">Greetings, one and all!</div>
+
+        <a href="@SiteRoutes.AddJournal">
+            <AppButton Variant="secondary">
+                + Add Journal
+            </AppButton>
+        </a>
+    </section>
+
+    @if (entries is null)
+    {
+        <p>Loading...</p>
+    }
+    else if (!entries.Any())
+    {
+        <p>No items</p>
+    }
+    else
+    {
+
+        <div class="grid gap-4 xl:grid-cols-2">
+            @foreach (var entry in entries)
+            {
+                <JournalEntryCard Entry="entry" AllMoods="allMoods" AllTags="allTags" AllCategories="allCategories" />
+            }
+        </div>
+
+        <div class="flex items-center gap-4 justify-between">
+            <p>
+                Page @Page
+            </p>
+
+            <div class="flex items-center gap-1">
+                <button @onclick="HandlePrevPage">
+                    <AppButton Variant="secondary">
+                        <i class="fi fi-rr-angle-small-left"></i> Previous
+                    </AppButton>
+                </button>
+                <button @onclick="HandleNextPage">
+                    <AppButton Variant="secondary">
+                        Next <i class="fi fi-rr-angle-small-right"></i>
+                    </AppButton>
+                </button>
+            </div>
+
+        </div>
+
+    }
+
+</div>
+
+
+@code {
+    List<Mood> allMoods = [];
+    List<Tag> allTags = [];
+    List<Category> allCategories = [];
+    List<JournalEntry> entries = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPage(1);
+        allMoods = await MoodService.GetItemsAsync();
+        allTags = await TagService.GetItemsAsync();
+        allCategories = await CategoryService.GetItemsAsync();
+    }
+}
+
+@code {
+    const int PageSize = 6;
+    int Page = 1;
+    bool HasNextPage;
+    string Query = string.Empty;
+
+    async Task LoadPage(int page)
+    {
+        var result = await JournalService.GetItemsAsync(page, PageSize, Query);
+
+        entries = result;
+        Page = page;
+        HasNextPage = result.Count == PageSize;
+    }
+
+    async Task HandleNextPage()
+    {
+        if (!HasNextPage) return;
+        await LoadPage(Page + 1);
+    }
+
+    async Task HandlePrevPage()
+    {
+        if (Page <= 1) return;
+        await LoadPage(Page - 1);
+    }
+
+    async Task HandleSearch(ChangeEventArgs e)
+    {
+        Query = e.Value?.ToString() ?? string.Empty;
+        await LoadPage(1);
+    }
+
+}

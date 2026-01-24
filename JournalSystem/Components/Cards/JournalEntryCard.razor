@@ -1,0 +1,68 @@
+@using JournalSystem.Models
+@inject IJournalService JournalService
+
+<div class="group bg-white rounded-lg p-4">
+    <div class="flex justify-between items-start mb-3">
+        <div class="flex flex-col">
+            <span class="text-[12px] font-semibold text-primary uppercase">
+                @Entry.EntryDate.ToString("MMMM dd, yyyy")
+            </span>
+            <h3 class="text-muted-foreground text-lg font-bold mt-1">@Entry.Title</h3>
+        </div>
+
+        <MoodPill Mood="primaryMood" />
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Entry.RichText))
+    {
+        <div class="text-[#556591] text-sm leading-relaxed mb-4 line-clamp-2">
+            @((MarkupString)Entry.RichText)
+        </div>
+    }
+
+    <div class="flex items-center justify-between">
+        <div class="flex gap-2">
+            @if (category != null)
+            {
+                <span class="px-2 py-0.5 bg-primary/10 text-primary rounded text-[10px] font-bold">
+                    @category.Name.ToUpper()
+                </span>
+            }
+            @foreach (var el in tags.Take(2))
+            {
+                var item = AllTags.FirstOrDefault(t => t.Id == el);
+                if (item != null)
+                {
+                    <span class="px-2 py-0.5 bg-primary/10 text-primary rounded text-[10px] font-bold">
+                        #@item.Name.ToUpper()
+                    </span>
+                }
+            }
+        </div>
+        <a href="@SiteRoutes.ViewJournal/@Entry.Id">
+            <AppButton Variant="secondary">
+                View Entry <i class="fi fi-rr-angle-small-right"></i>
+            </AppButton>
+        </a>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public JournalEntry Entry { get; set; } = default!;
+
+    [Parameter]
+    public List<Mood> AllMoods { get; set; } = new();
+
+    [Parameter]
+    public List<Tag> AllTags { get; set; } = new();
+
+    [Parameter]
+    public List<Category> AllCategories { get; set; } = new();
+
+
+    Mood? primaryMood => AllMoods.FirstOrDefault(m => m.Id == Entry.PrimaryMood);
+    Category? category => AllCategories.FirstOrDefault(c => c.Id == Entry.Category);
+    List<int> secondaryMoods = new();
+    List<int> tags = new();
+}
