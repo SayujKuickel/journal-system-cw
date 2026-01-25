@@ -18,6 +18,6 @@ namespace JournalSystem.Services.Interface
         public Task UpdateJournalEntry(Guid id, JournalFormModel formData, string richText);
         public Task<List<int>> GetSecondaryMoodsAsync(Guid id);
         public Task<List<int>> GetTagsAsync(Guid id);
-
+        public Task<List<JournalEntry>> GetAllItems();
     }
 }

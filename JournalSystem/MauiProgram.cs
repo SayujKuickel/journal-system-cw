@@ -28,6 +28,7 @@ namespace JournalSystem
             builder.Services.AddSingleton<ICategoryService, CategoryService>();
             builder.Services.AddSingleton<IMoodService, MoodService>();
             builder.Services.AddSingleton<ITagService, TagService>();
+            builder.Services.AddSingleton<IAnalyticsService, AnalyticsService>();
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();

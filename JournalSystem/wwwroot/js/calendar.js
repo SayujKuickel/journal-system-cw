@@ -6,30 +6,23 @@ function initializeFullCalendar() {
   calendar = new FullCalendar.Calendar(ID, {
     initialView: "dayGridMonth",
     headerToolbar: {
-      left: "prev,next today",
+      left: "prev,next",
       center: "title",
-      right: "",
+      right: "newBtn today",
     },
     events: [],
-    dateClick: function (info) {
-      if (window.DotNet && DotNet.invokeMethodAsync) {
-        DotNet.invokeMethodAsync(
-          "JournalApplication",
-          "NavigateToDate",
-          info.dateStr,
-        );
-      }
-    },
     eventClick: function (info) {
-      if (window.DotNet && DotNet.invokeMethodAsync) {
-        DotNet.invokeMethodAsync(
-          "JournalApplication",
-          "NavigateToEntry",
-          info.event.id,
-        );
-      }
+      window.location.href = `/view-journal/${info.event.id}`;
     },
-    height: 600,
+    customButtons: {
+      newBtn: {
+        text: "New Journal",
+        click: function () {
+          window.location.href = "/add-journal";
+        },
+      },
+    },
+    height: 750,
   });
 
   calendar.render();

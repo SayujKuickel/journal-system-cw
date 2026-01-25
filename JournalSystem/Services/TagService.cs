@@ -14,4 +14,11 @@ public class TagService : ITagService
 
         return await db.Table<Tag>().ToListAsync();
     }
+
+    public async Task<Tag> GetItemAsync(int id)
+    {
+        var db = await Db();
+
+        return await db.Table<Tag>().FirstOrDefaultAsync(e => e.Id == id);
+    }
 }

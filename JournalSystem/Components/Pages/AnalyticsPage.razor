@@ -1,5 +1,48 @@
 @page "/analytics"
+@inject IAnalyticsService AnalyticsService
 
-<h1 class="text-4xl font-bold">
+<h1 class="text-4xl font-bold mb-6">
     Analytics
 </h1>
+
+@if (isLoading)
+{
+    <span>Loading...</span>
+}
+else
+{
+    <div class="grid grid-cols-6 gap-6">
+
+        <div class="col-span-2">
+            <h2 class="text-2xl font-semibold mb-2">Mood Distribution</h2>
+            <MoodDistributionChart Distribution="moodDistributionResult" />
+        </div>
+
+        <div class="col-span-4">
+            <h2 class="text-2xl font-semibold mb-2">Top Tags</h2>
+            <TopTagsChart Tags="topTags" />
+        </div>
+
+        <div class="col-span-6 max-h-96">
+            <h2 class="text-2xl font-semibold mb-2">Percentage of Journal Per Category</h2>
+            <CategoryBreakdownChart CategoryBreakdown="categoryBreakdown" />
+        </div>
+
+    </div>
+}
+
+@code {
+    bool isLoading = true;
+
+    MoodDistributionResult moodDistributionResult = new();
+    List<TopTagsResult> topTags = [];
+    List<CategoryBreakdownResult> categoryBreakdown = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        moodDistributionResult = await AnalyticsService.GetMoodDistributionStats();
+        topTags = await AnalyticsService.GetTopUsedTags();
+        categoryBreakdown = await AnalyticsService.GetCategoryBreakdown();
+        isLoading = false;
+    }
+}

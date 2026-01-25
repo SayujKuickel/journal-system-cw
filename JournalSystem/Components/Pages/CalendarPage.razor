@@ -1,6 +1,8 @@
 ﻿@page "/calendar"
 @inject IJSRuntime JS
-
+@inject IJournalService JournalService
+@inject NavigationManager Nav
+@using Microsoft.JSInterop
 
 <div class="space-y-4">
     <h1 class="text-4xl font-bold"> Calendar </h1>
@@ -8,7 +10,14 @@
     <div id="calendar"></div>
 
 </div>
+
 @code {
+    List<JournalEntry> entries;
+
+    protected override async Task OnInitializedAsync()
+    {
+        entries = await JournalService.GetAllItems();
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -16,6 +25,20 @@
         {
             // Initialize calendar JS
             await JS.InvokeVoidAsync("initializeFullCalendar");
+
+            if (entries.Any())
+            {
+                @* create js entries to show *@
+                var items = entries.Select(el => new
+                {
+                    id = el.Id,
+                    title = el.Title,
+                    start = el.EntryDate.ToString("yyyy-MM-dd"),
+                    color = "#481638",
+                }).ToList();
+
+                await JS.InvokeVoidAsync("createCalendarEvents", items);
+            }
         }
     }
 }

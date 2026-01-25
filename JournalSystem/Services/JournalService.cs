@@ -1,4 +1,5 @@
-﻿using JournalSystem.Models;
+﻿using JournalSystem.Components.Pages.Auth;
+using JournalSystem.Models;
 using JournalSystem.Services.Interface;
 using SQLite;
 
@@ -49,6 +50,16 @@ public class JournalService : IJournalService
                               .ToListAsync();
         return entries.FirstOrDefault(e => e.EntryDate.Date == dateOnly);
     }
+
+    public async Task<List<JournalEntry>> GetAllItems()
+    {
+        var db = await Db();
+
+        return await db.Table<JournalEntry>()
+            .OrderByDescending(e => e.EntryDate)
+            .ToListAsync();
+    }
+
 
     public async Task<int> SaveItemAsync(JournalEntry item)
     {
@@ -130,7 +141,7 @@ public class JournalService : IJournalService
         entry.RichText = richText;
         entry.PrimaryMood = formData.ChosenMoods.FirstOrDefault();
         entry.Category = formData.Category;
-        entry.UpdatedAt = DateTime.Today;
+        entry.UpdatedAt = DateTime.Now;
 
         await db.UpdateAsync(entry);
 
@@ -173,6 +184,8 @@ public class JournalService : IJournalService
         }
     }
 
+
+
     public async Task<List<int>> GetSecondaryMoodsAsync(Guid id)
     {
         var db = await Db();
@@ -181,6 +194,7 @@ public class JournalService : IJournalService
 
         return moods.Select(el => el.MoodId).ToList();
     }
+
 
     public async Task<List<int>> GetTagsAsync(Guid id)
     {

@@ -9,7 +9,7 @@ namespace JournalSystem.Services
     public class PasswordService : IPasswordService
     {
 
-        private const string PASSKEY = "user_pass";
+        private const string PASSKEY = "user_password";
 
         public async Task<string> GetKey()
         {

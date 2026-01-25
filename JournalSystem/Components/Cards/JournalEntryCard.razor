@@ -2,67 +2,112 @@
 @inject IJournalService JournalService
 
 <div class="group bg-white rounded-lg p-4">
-    <div class="flex justify-between items-start mb-3">
-        <div class="flex flex-col">
-            <span class="text-[12px] font-semibold text-primary uppercase">
-                @Entry.EntryDate.ToString("MMMM dd, yyyy")
-            </span>
-            <h3 class="text-muted-foreground text-lg font-bold mt-1">@Entry.Title</h3>
-        </div>
-
-        <MoodPill Mood="primaryMood" />
-    </div>
-
-    @if (!string.IsNullOrWhiteSpace(Entry.RichText))
-    {
-        <div class="text-[#556591] text-sm leading-relaxed mb-4 line-clamp-2">
-            @((MarkupString)Entry.RichText)
-        </div>
-    }
-
-    <div class="flex items-center justify-between">
-        <div class="flex gap-2">
-            @if (category != null)
-            {
-                <span class="px-2 py-0.5 bg-primary/10 text-primary rounded text-[10px] font-bold">
-                    @category.Name.ToUpper()
+    <section class="flex flex-col justify-between h-full">
+        <div class="flex justify-between items-start mb-3">
+            <div class="flex flex-col">
+                <span class="text-[12px] font-semibold text-primary uppercase">
+                    @Entry.EntryDate.ToString("MMMM dd, yyyy")
                 </span>
-            }
-            @foreach (var el in tags.Take(2))
-            {
-                var item = AllTags.FirstOrDefault(t => t.Id == el);
-                if (item != null)
+                <h3 class="text-foreground text-lg font-bold mt-1 line-clamp-2">
+                    @Entry.Title
+                </h3>
+            </div>
+
+            <div class="flex flex-col items-end">
+                @if (PrimaryMood is not null)
+                {
+                    <MoodPill Mood="PrimaryMood" />
+                }
+
+                <p class="flex gap-1 mt-1">
+                    @if (secondaryMoods.Any())
+                    {
+                        var lastIndex = secondaryMoods.Count - 1;
+
+                        for (var i = 0; i < secondaryMoods.Count; i++)
+                        {
+                            var moodId = secondaryMoods[i];
+                            var el = AllMoods.FirstOrDefault(m => m.Id == moodId);
+
+                            if (el is not null)
+                            {
+                                <span class="text-[12px]">
+                                    @el.Name@(i < lastIndex ? "," : "")
+                                </span>
+                            }
+                        }
+                    }
+                </p>
+
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Entry.RichText))
+        {
+            <div class="text-muted-foreground text-sm leading-relaxed mb-4 line-clamp-2">
+                @((MarkupString)Entry.RichText)
+            </div>
+        }
+
+        <div class="flex items-center justify-between">
+            <div class="flex gap-2 flex-wrap">
+                @if (Category is not null)
                 {
                     <span class="px-2 py-0.5 bg-primary/10 text-primary rounded text-[10px] font-bold">
-                        #@item.Name.ToUpper()
+                        @Category.Name.ToUpper()
                     </span>
+                }
+            </div>
+
+            <a href="@($"{SiteRoutes.ViewJournal}/{Entry.Id}")">
+                <AppButton Variant="secondary">
+                    View Entry <i class="fi fi-rr-angle-small-right"></i>
+                </AppButton>
+            </a>
+        </div>
+
+        <div class="flex gap-2 flex-wrap mb-2">
+            @if (tags.Any())
+            {
+                @foreach (int tag in tags)
+                {
+                    var el = AllTags.FirstOrDefault(el => el.Id == tag);
+                    if (el != null)
+                    {
+                        <span class="px-2 bg-primary/5 outline-2 outline-primary rounded-lg text-nowrap text-xs">#@el.Name</span>
+                    }
                 }
             }
         </div>
-        <a href="@SiteRoutes.ViewJournal/@Entry.Id">
-            <AppButton Variant="secondary">
-                View Entry <i class="fi fi-rr-angle-small-right"></i>
-            </AppButton>
-        </a>
-    </div>
+    </section>
 </div>
 
 @code {
-    [Parameter]
+    [Parameter, EditorRequired]
     public JournalEntry Entry { get; set; } = default!;
 
-    [Parameter]
-    public List<Mood> AllMoods { get; set; } = new();
+    [Parameter] public List<Mood> AllMoods { get; set; } = new();
+    [Parameter] public List<Tag> AllTags { get; set; } = new();
+    [Parameter] public List<Category> AllCategories { get; set; } = new();
 
-    [Parameter]
-    public List<Tag> AllTags { get; set; } = new();
+    private Mood? PrimaryMood;
+    private Category? Category;
 
-    [Parameter]
-    public List<Category> AllCategories { get; set; } = new();
-
-
-    Mood? primaryMood => AllMoods.FirstOrDefault(m => m.Id == Entry.PrimaryMood);
-    Category? category => AllCategories.FirstOrDefault(c => c.Id == Entry.Category);
     List<int> secondaryMoods = new();
     List<int> tags = new();
+
+    private Dictionary<int, Tag> TagMap = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Entry is null)
+            return;
+
+        PrimaryMood = AllMoods.FirstOrDefault(m => m.Id == Entry.PrimaryMood);
+        Category = AllCategories.FirstOrDefault(c => c.Id == Entry.Category);
+        TagMap = AllTags.ToDictionary(t => t.Id);
+
+        secondaryMoods = await JournalService.GetSecondaryMoodsAsync(Entry.Id);
+        tags = await JournalService.GetTagsAsync(Entry.Id);
+    }
 }

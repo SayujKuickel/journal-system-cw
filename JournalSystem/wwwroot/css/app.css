@@ -1,3 +1,121 @@
 .fi {
   display: flex;
 }
+
+/*  */
+
+.rich_text_container p {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.rich_text_container h1 {
+  font-size: 2.25rem;
+  font-weight: bold;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.rich_text_container h2 {
+  font-size: 1.875rem;
+  font-weight: bold;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.rich_text_container h3 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.rich_text_container a {
+  color: #1717ff;
+  text-decoration: underline;
+}
+
+.rich_text_container a:hover {
+  color: #0808c9;
+}
+
+.rich_text_container strong,
+.rich_text_container b {
+  font-weight: bold;
+}
+
+.rich_text_container em,
+.rich_text_container i {
+  font-style: italic;
+}
+
+.rich_text_container.table_wrapper {
+  width: 100%;
+  overflow-x: scroll;
+  -webkit-overflow-scrolling: touch;
+}
+
+.rich_text_container table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+
+.rich_text_container caption {
+  text-align: center;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.rich_text_container th,
+.rich_text_container td {
+  border: 1px solid #ddd;
+  padding: 0.75rem;
+  vertical-align: top;
+}
+
+.rich_text_container th {
+  background-color: #e59623;
+  font-weight: 600;
+  text-align: center;
+}
+
+.rich_text_container tbody tr:nth-child(even) {
+  background-color: #fdfdfd;
+}
+
+.rich_text_container .section {
+  background: #eef4ff;
+  font-weight: 700;
+  text-align: left;
+}
+
+/* Lists */
+.rich_text_container ul,
+.rich_text_container ol {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  padding-left: 1.5rem; /* indentation */
+}
+
+.rich_text_container li {
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.rich_text_container ul ul,
+.rich_text_container ol ol {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+  padding-left: 1.5rem;
+}
+
+.rich_text_container ul {
+  list-style-type: disc;
+}
+
+.rich_text_container ol {
+  list-style-type: decimal;
+}

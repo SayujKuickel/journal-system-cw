@@ -9,8 +9,7 @@
 }
 
 @code {
-    [Parameter]
-    public Mood? Mood { get; set; }
+    [Parameter] public Mood? Mood { get; set; }
 
     static string GetMoodIcon(Mood.MoodType value) => value switch
     {

@@ -10,7 +10,7 @@ public sealed class DatabaseService
 {
     private static SQLiteAsyncConnection? _db;
     private static readonly SemaphoreSlim _lock = new(1, 1);
-    private const string DB_NAME = "JournalSystem5.db";
+    private const string DB_NAME = "journal-2.db";
 
     public static async Task<SQLiteAsyncConnection> GetConnectionAsync()
     {
@@ -108,8 +108,29 @@ public sealed class DatabaseService
 
         if (await conn.Table<Category>().CountAsync() == 0)
         {
-
-            List<string> categories = new() { "Work", "Health", "Travel", "Personal", };
+            List<string> categories = new()
+                                    {
+                                        "Work",
+                                        "Health",
+                                        "Travel",
+                                        "Personal",
+                                        "Education",
+                                        "Finance",
+                                        "Hobbies",
+                                        "Relationships",
+                                        "Spirituality",
+                                        "Fitness",
+                                        "Self-Care",
+                                        "Social Life",
+                                        "Career Development",
+                                        "Projects",
+                                        "Creativity",
+                                        "Home & Family",
+                                        "Wellness",
+                                        "Leisure",
+                                        "Events",
+                                        "Goals & Planning"
+                                    };
 
             foreach (var category in categories)
             {
@@ -141,13 +162,13 @@ public sealed class DatabaseService
                 .RuleFor(e => e.CreatedAt, f => f.Date.Past(1))
                 .RuleFor(e => e.UpdatedAt, (f, e) => e.CreatedAt);
 
-            var entries = entryFaker.Generate(8);
+            var entries = entryFaker.Generate(75);
 
             foreach (var entry in entries)
             {
                 await conn.InsertAsync(entry);
 
-                var secondaryMoodCount = faker.Random.Int(1, 3);
+                var secondaryMoodCount = faker.Random.Int(0, 2);
                 var secondaryMoods = faker.PickRandom(moodIds.Where(m => m != entry.PrimaryMood), secondaryMoodCount);
                 foreach (var moodId in secondaryMoods)
                 {
