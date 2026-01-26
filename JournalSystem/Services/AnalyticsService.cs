@@ -4,29 +4,6 @@ using JournalSystem.Services.Interface;
 using SQLite;
 namespace JournalSystem.Services;
 
-public sealed class MoodDistributionResult
-{
-    public int Positive { get; init; }
-    public int Neutral { get; init; }
-    public int Negative { get; init; }
-    public int Total => Positive + Neutral + Negative;
-}
-
-public sealed class TopTagsResult
-{
-    public Tag Tag { get; init; }
-    public int Count { get; init; }
-}
-
-
-public class CategoryBreakdownResult
-{
-    public string CategoryName { get; set; }
-    public int Count { get; set; }
-    public double Percentage { get; set; }
-}
-
-
 public class AnalyticsService : IAnalyticsService
 {
     private async Task<SQLiteAsyncConnection> Db()
@@ -40,11 +17,6 @@ public class AnalyticsService : IAnalyticsService
         tagService = new();
         journalService = new();
     }
-
-
-
-    // 
-
 
     public async Task<MoodDistributionResult> GetMoodDistributionStats()
     {
@@ -115,7 +87,7 @@ public class AnalyticsService : IAnalyticsService
             .GroupBy(t => t.TagId)
             .Select(g => new { TagId = g.Key, Count = g.Count() })
             .OrderByDescending(x => x.Count)
-            .Take(5)
+            .Take(8)
             .ToList();
 
         var tags = await db.Table<Tag>().ToListAsync();
@@ -156,4 +128,116 @@ public class AnalyticsService : IAnalyticsService
     }
 
 
+    public async Task<StreakSummary> GetStreaksAsync()
+    {
+        var db = await Db();
+        var entries = await db.Table<JournalEntry>().ToListAsync();
+
+        var dates = entries
+            .Select(e => e.EntryDate.Date)
+            .Distinct()
+            .OrderBy(d => d)
+            .ToList();
+
+        if (dates.Count == 0)
+            return new StreakSummary
+            {
+                MissedDays = new List<DateTime>()
+            };
+
+        int longestCount = 1;
+        DateTime longestStart = dates[0];
+        DateTime longestEnd = dates[0];
+
+        int tempCount = 1;
+        DateTime tempStart = dates[0];
+
+        var missedDays = new List<DateTime>();
+
+        for (int i = 1; i < dates.Count; i++)
+        {
+            var gap = (dates[i] - dates[i - 1]).Days;
+
+            if (gap == 1)
+            {
+                tempCount++;
+
+                if (tempCount > longestCount)
+                {
+                    longestCount = tempCount;
+                    longestStart = tempStart;
+                    longestEnd = dates[i];
+                }
+            }
+            else if (gap > 1)
+            {
+                for (int j = 1; j < gap; j++)
+                {
+                    missedDays.Add(dates[i - 1].AddDays(j));
+                }
+
+                tempCount = 1;
+                tempStart = dates[i];
+            }
+        }
+
+        int currentCount = 0;
+        DateTime? currentEnd = null;
+        DateTime? currentStart = null;
+        var today = DateTime.Today;
+
+        for (int i = dates.Count - 1; i >= 0; i--)
+        {
+            var diff = (today - dates[i]).Days;
+
+            if (diff == currentCount || (currentCount == 0 && diff == 1))
+            {
+                currentCount++;
+                currentEnd ??= dates[i];
+                currentStart = dates[i];
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        return new StreakSummary
+        {
+            CurrentCount = currentCount,
+            CurrentStart = currentStart,
+            CurrentEnd = currentEnd,
+            LongestCount = longestCount,
+            LongestStart = longestStart,
+            LongestEnd = longestEnd,
+            MissedDays = missedDays
+        };
+    }
+
+    public async Task<List<WordCountTrendResult>> GetWordCountTrendsAsync()
+    {
+        var db = await Db();
+        var entries = await db.Table<JournalEntry>()
+            .OrderBy(e => e.EntryDate)
+            .ToListAsync();
+
+        var trends = entries
+            .GroupBy(e => e.EntryDate.Date)
+            .Select(g =>
+            {
+                var totalWords = g.Sum(e => string.IsNullOrWhiteSpace(e.RichText) ? 0 : e.RichText.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length);
+
+                var avgWords = g.Count() > 0 ? (double)totalWords / g.Count() : 0;
+
+                return new WordCountTrendResult
+                {
+                    Date = g.Key,
+                    AverageWords = avgWords
+                };
+            })
+            .OrderBy(r => r.Date)
+            .ToList();
+
+        return trends;
+    }
 }

@@ -10,7 +10,7 @@ public sealed class DatabaseService
 {
     private static SQLiteAsyncConnection? _db;
     private static readonly SemaphoreSlim _lock = new(1, 1);
-    private const string DB_NAME = "journal-2.db";
+    private const string DB_NAME = "journal-xyz.db";
 
     public static async Task<SQLiteAsyncConnection> GetConnectionAsync()
     {
@@ -108,29 +108,7 @@ public sealed class DatabaseService
 
         if (await conn.Table<Category>().CountAsync() == 0)
         {
-            List<string> categories = new()
-                                    {
-                                        "Work",
-                                        "Health",
-                                        "Travel",
-                                        "Personal",
-                                        "Education",
-                                        "Finance",
-                                        "Hobbies",
-                                        "Relationships",
-                                        "Spirituality",
-                                        "Fitness",
-                                        "Self-Care",
-                                        "Social Life",
-                                        "Career Development",
-                                        "Projects",
-                                        "Creativity",
-                                        "Home & Family",
-                                        "Wellness",
-                                        "Leisure",
-                                        "Events",
-                                        "Goals & Planning"
-                                    };
+            List<string> categories = new() { "Work", "Health", "Travel", "Personal", "Education", "Finance", "Hobbies", "Relationships", "Spirituality", "Fitness", "Self-Care", "Social Life", "Career Development", "Projects", "Creativity", "Home & Family", "Wellness", "Leisure", "Events", "Goals & Planning" };
 
             foreach (var category in categories)
             {
@@ -154,7 +132,7 @@ public sealed class DatabaseService
 
             var entryFaker = new Bogus.Faker<JournalEntry>()
                 .RuleFor(e => e.Id, f => Guid.NewGuid())
-                .RuleFor(e => e.EntryDate, f => f.Date.Between(DateTime.Now.AddYears(-1), DateTime.Now))
+                .RuleFor(e => e.EntryDate, f => f.Date.Between(DateTime.Now.AddMonths(-3), DateTime.Now.AddDays(-1)))
                 .RuleFor(e => e.Title, f => f.Lorem.Sentence(3, 5).TrimEnd('.'))
                 .RuleFor(e => e.RichText, f => $"<p>{f.Lorem.Paragraphs(4, 30)}</p>")
                 .RuleFor(e => e.PrimaryMood, f => f.PickRandom(moodIds))
@@ -164,7 +142,9 @@ public sealed class DatabaseService
 
             var entries = entryFaker.Generate(75);
 
-            foreach (var entry in entries)
+            var final = entries.DistinctBy(e => e.EntryDate.Date).ToList();
+
+            foreach (var entry in final)
             {
                 await conn.InsertAsync(entry);
 

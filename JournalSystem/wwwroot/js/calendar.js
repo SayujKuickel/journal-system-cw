@@ -12,7 +12,9 @@ function initializeFullCalendar() {
     },
     events: [],
     eventClick: function (info) {
-      window.location.href = `/view-journal/${info.event.id}`;
+      if (info.event.id.length > 5) {
+        window.location.href = `/view-journal/${info.event.id}`;
+      }
     },
     customButtons: {
       newBtn: {
@@ -38,6 +40,7 @@ function createCalendarEvents(events) {
       id: e.id,
       title: e.title,
       start: e.start,
+      end: e.end,
       allDay: true,
       color: e.color,
     });

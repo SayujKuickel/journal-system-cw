@@ -1,4 +1,5 @@
 @page "/journal"
+@using System.Security.Cryptography.X509Certificates
 @inject IJournalService JournalService
 @inject IMoodService MoodService
 @inject ITagService TagService
@@ -12,25 +13,130 @@
 
     <section class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-2">
-            <input @oninput="HandleSearch" placeholder="Type here to search."
+            <input @bind="filters.Query" placeholder="Type here to search."
                 class="w-full rounded-lg border border-slate-300 px-4 py-2 sm:w-sm text-slate-900 placeholder-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-shadow" />
-
-            <button popovertarget="my-popover">
-                <AppButton>
-                    Filters
-                    <i class="fi fi-rr-filter"></i>
-                </AppButton>
+            <button @onclick="ApplyFilters">
+                <AppButton Variant="outline">Search</AppButton>
             </button>
+
+            <div class="relative">
+                <button @onclick="HandleTogglePopover">
+                    <AppButton Variant="secondary">
+                        Filters
+                        <i class="fi fi-rr-filter"></i>
+                    </AppButton>
+                </button>
+
+                @if (isPopoverShown)
+                {
+
+                    <section
+                        class="absolute top-full right-0 mt-4 p-4 bg-card bg-card-foregroun rounded-lg border w-80 border-input space-y-2 shadow">
+                        <p class="text-lg font-bold">Filters</p>
+
+
+                        <div class="">
+                            <label class="text-sm font-semibold text-slate-700">Tags</label>
+
+                            <select @bind="filters.SelectedTag"
+                                class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                                <option value="0">Choose</option>
+                                @foreach (var item in allTags)
+                                {
+                                    <option value="@item.Id">@item.Name</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="">
+                                <label class="text-sm font-semibold text-slate-700">Primary Mood</label>
+                                <select @bind="filters.SelectedMood"
+                                    class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                                    <option value="0">Choose</option>
+                                    @foreach (var item in allMoods)
+                                    {
+                                        <option value="@item.Id">@item.Name</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="">
+                                <label class="text-sm font-semibold text-slate-700">Secondary Mood</label>
+                                <select @bind="filters.SelectedSecondaryMood"
+                                    class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                                    <option value="0">Choose</option>
+                                    @foreach (var item in allMoods)
+                                    {
+                                        <option value="@item.Id">@item.Name</option>
+                                    }
+                                </select>
+                            </div>
+
+                        </div>
+
+
+                        <div class="">
+                            <label class="text-sm font-semibold text-slate-700">Category</label>
+                            <select @bind="filters.SelectedCategory"
+                                class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                                <option value="0">Choose</option>
+                                @foreach (var item in allCategories)
+                                {
+                                    <option value="@item.Id">@item.Name</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+
+                            <div class="">
+                                <label class="text-sm font-semibold text-slate-700">Start Date</label>
+                                <input
+                                    class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                    type="date" @bind="filters.StartDate">
+                            </div>
+
+                            <div class="">
+                                <label class="text-sm font-semibold text-slate-700">End Date</label>
+                                <input
+                                    class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                    type="date" @bind="filters.EndDate">
+                            </div>
+                        </div>
+
+
+                        <div class="flex items-center justify-end gap-2 mt-3">
+                            <button @onclick="ApplyFilters">
+                                <AppButton>Apply Filters</AppButton>
+                            </button>
+                            <button class="" @onclick="ClearFilters">
+                                <AppButton Variant="destructive">Clear</AppButton>
+                            </button>
+                        </div>
+                    </section>
+                }
+            </div>
         </div>
 
-        <div popover id="my-popover">Greetings, one and all!</div>
 
         <a href="@SiteRoutes.AddJournal">
-            <AppButton Variant="secondary">
+            <AppButton>
                 + Add Journal
             </AppButton>
         </a>
     </section>
+    @* <div class="">
+        <p>PageSize @filters.PageSize</p>
+        <p>Page @filters.Page</p>
+        <p>HasNextPage @filters.HasNextPage</p>
+        <p>Query @filters.Query</p>
+        <p>StartDate @filters.StartDate</p>
+        <p>EndDate @filters.EndDate</p>
+        <p>SelectedTag @filters.SelectedTag</p>
+        <p>SelectedCategory @filters.SelectedCategory</p>
+        <p>SelectedMood @filters.SelectedMood</p>
+    </div> *@
 
     @if (entries is null)
     {
@@ -52,7 +158,7 @@
 
         <div class="flex items-center gap-4 justify-between">
             <p>
-                Page @Page
+                Page @filters.Page
             </p>
 
             <div class="flex items-center gap-1">
@@ -75,6 +181,7 @@
 </div>
 
 
+@* data fetchers *@
 @code {
     List<Mood> allMoods = [];
     List<Tag> allTags = [];
@@ -83,44 +190,59 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadPage(1);
+        await LoadData(1);
         allMoods = await MoodService.GetItemsAsync();
         allTags = await TagService.GetItemsAsync();
         allCategories = await CategoryService.GetItemsAsync();
     }
-}
 
-@code {
-    const int PageSize = 6;
-    int Page = 1;
-    bool HasNextPage;
-    string Query = string.Empty;
-
-    async Task LoadPage(int page)
+    async Task LoadData(int page)
     {
-        var result = await JournalService.GetItemsAsync(page, PageSize, Query);
+        filters.Page = page;
+
+        var result = await JournalService.GetItemsAsync(filters);
 
         entries = result;
-        Page = page;
-        HasNextPage = result.Count == PageSize;
+        filters.HasNextPage = result.Count == filters.PageSize;
     }
+}
+
+@* filter and pagination *@
+@code {
+    FilterProvider filters = new();
 
     async Task HandleNextPage()
     {
-        if (!HasNextPage) return;
-        await LoadPage(Page + 1);
+        if (!filters.HasNextPage) return;
+        await LoadData(filters.Page + 1);
     }
 
     async Task HandlePrevPage()
     {
-        if (Page <= 1) return;
-        await LoadPage(Page - 1);
+        if (filters.Page <= 1) return;
+        await LoadData(filters.Page - 1);
     }
 
-    async Task HandleSearch(ChangeEventArgs e)
+    async Task ApplyFilters()
     {
-        Query = e.Value?.ToString() ?? string.Empty;
-        await LoadPage(1);
+        isPopoverShown = false;
+        filters.Page = 1;
+        await LoadData(1);
     }
 
+    async Task ClearFilters()
+    {
+        isPopoverShown = false;
+
+        filters = new();
+        await LoadData(1);
+    }
+
+
+}
+
+@* popover logic  *@
+@code {
+    bool isPopoverShown = false;
+    void HandleTogglePopover() => isPopoverShown = !isPopoverShown;
 }

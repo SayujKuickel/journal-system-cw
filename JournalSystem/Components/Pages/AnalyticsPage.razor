@@ -1,35 +1,117 @@
 @page "/analytics"
 @inject IAnalyticsService AnalyticsService
 
-<h1 class="text-4xl font-bold mb-6">
-    Analytics
-</h1>
+<div class="space-y-4">
+    <h1 class="text-4xl font-bold mb-6">
+        Analytics
+    </h1>
 
-@if (isLoading)
-{
-    <span>Loading...</span>
-}
-else
-{
-    <div class="grid grid-cols-6 gap-6">
+    @if (isLoading)
+    {
+        <span>Loading...</span>
+    }
+    else
+    {
+        <div class="grid grid-cols-4 gap-4">
+            @if (streakData.LongestCount > 0)
+            {
+                <div class="p-4 bg-primary text-primary-foreground rounded-lg">
+                    <h2 class="text-2xl font-semibold mb-5">Longest Streak</h2>
+                    <div class="text-7xl flex gap-2 items-end">
 
-        <div class="col-span-2">
-            <h2 class="text-2xl font-semibold mb-2">Mood Distribution</h2>
-            <MoodDistributionChart Distribution="moodDistributionResult" />
+                        <i class="fi fi-rr-flame"></i>
+                        <p>
+                            @streakData.LongestCount
+                        </p>
+                    </div>
+                    <span class="text-xs mt-4 block">
+                        @streakData.LongestStart?.ToString("MMM dd, yyyy") to @streakData.LongestEnd?.ToString("MMM dd, yyyy")
+                    </span>
+                </div>
+            }
+
+            @if (streakData.CurrentCount > 0)
+            {
+                <div class="p-4 bg-primary text-primary-foreground rounded-lg">
+                    <h2 class="text-2xl font-semibold mb-5">Current Streak</h2>
+                    <div class="text-7xl flex gap-2 items-end">
+
+                        <i class="fi fi-rr-fire-flame-curved"></i>
+                        <p>
+                            @streakData.CurrentCount
+                        </p>
+                    </div>
+                    <span class="text-xs mt-4 block">
+                        @streakData.CurrentStart?.ToString("MMM dd, yyyy") to today
+                    </span>
+                </div>
+            }
+
+            <div class="p-4 bg-primary text-primary-foreground rounded-lg">
+                <h2 class="text-2xl font-semibold mb-5">Top Tag</h2>
+                <div class="text-7xl flex gap-2 items-end">
+
+                    <i class="fi fi-rr-tags"></i>
+                    <p>
+                        @topTags[0].Count
+                    </p>
+                </div>
+                <span class="text-xs mt-4 block">
+                    @topTags[0].Tag.Name
+
+                </span>
+            </div>
+            <div class="p-4 bg-primary text-primary-foreground rounded-lg">
+                <h2 class="text-2xl font-semibold mb-5">Top Category</h2>
+                <div class="text-7xl flex gap-2 items-end">
+
+                    <i class="fi fi-rr-bookmark"></i>
+
+                    <p>
+                        @categoryBreakdown[0].Count
+                    </p>
+                </div>
+                <span class="text-xs mt-4 block">
+                    @categoryBreakdown[0].CategoryName
+                    -
+                    @Math.Clamp(categoryBreakdown[0].Percentage, 0, 100).ToString("0.##")
+                    %
+                </span>
+            </div>
+            <div class="p-4 bg-primary text-primary-foreground rounded-lg">
+                <h2 class="text-2xl font-semibold mb-5">Missed Days</h2>
+                <div class="text-7xl flex gap-2 items-end">
+
+                    <i class="fi fi-rr-house-day"></i>
+
+                    <p>@streakData.MissedDays.Count </p>
+                </div>
+                <span class="text-xs mt-4 block">
+                    Number of days missed.
+                </span>
+            </div>
         </div>
 
-        <div class="col-span-4">
-            <h2 class="text-2xl font-semibold mb-2">Top Tags</h2>
-            <TopTagsChart Tags="topTags" />
-        </div>
+        <div class="grid grid-cols-6 gap-6">
 
-        <div class="col-span-6 max-h-96">
-            <h2 class="text-2xl font-semibold mb-2">Percentage of Journal Per Category</h2>
-            <CategoryBreakdownChart CategoryBreakdown="categoryBreakdown" />
-        </div>
+            <div class="col-span-2">
+                <h2 class="text-2xl font-semibold mb-2">Mood Distribution</h2>
+                <MoodDistributionChart Distribution="moodDistributionResult" />
+            </div>
 
-    </div>
-}
+            <div class="col-span-4">
+                <h2 class="text-2xl font-semibold mb-2">Top Tags</h2>
+                <TopTagsChart Tags="topTags" />
+            </div>
+
+            <div class="col-span-6 max-h-96">
+                <h2 class="text-2xl font-semibold mb-2">Percentage of Journal Per Category</h2>
+                <CategoryBreakdownChart CategoryBreakdown="categoryBreakdown" />
+            </div>
+
+        </div>
+    }
+</div>
 
 @code {
     bool isLoading = true;
@@ -37,12 +119,14 @@ else
     MoodDistributionResult moodDistributionResult = new();
     List<TopTagsResult> topTags = [];
     List<CategoryBreakdownResult> categoryBreakdown = [];
+    StreakSummary streakData = new();
 
     protected override async Task OnInitializedAsync()
     {
         moodDistributionResult = await AnalyticsService.GetMoodDistributionStats();
         topTags = await AnalyticsService.GetTopUsedTags();
         categoryBreakdown = await AnalyticsService.GetCategoryBreakdown();
+        streakData = await AnalyticsService.GetStreaksAsync();
         isLoading = false;
     }
 }

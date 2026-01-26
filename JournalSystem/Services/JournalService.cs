@@ -5,33 +5,90 @@ using SQLite;
 
 namespace JournalSystem.Services;
 
+public class FilterProvider
+{
+    public int PageSize = 6;
+    public int Page = 1;
+    public bool HasNextPage = false;
+    public string Query = String.Empty;
+    public DateTime? StartDate;
+    public DateTime? EndDate;
+    public int SelectedTag;
+    public int SelectedCategory;
+    public int SelectedMood;
+    public int SelectedSecondaryMood;
+}
+
 public class JournalService : IJournalService
 {
     private async Task<SQLiteAsyncConnection> Db()
         => await DatabaseService.GetConnectionAsync();
 
-    public async Task<List<JournalEntry>> GetItemsAsync(int page = 1, int perPage = 10, string query = "")
+    public async Task<List<JournalEntry>> GetItemsAsync(FilterProvider filters)
     {
-        var safePage = Math.Max(1, page);
-        var safePerPage = Math.Max(1, perPage);
+        var safePage = Math.Max(1, filters.Page);
+        var safePerPage = Math.Max(1, filters.PageSize);
         var offset = (safePage - 1) * safePerPage;
 
         var db = await Db();
-        var table = db.Table<JournalEntry>();
+        var query = db.Table<JournalEntry>();
 
-        if (!string.IsNullOrWhiteSpace(query))
+        // string
+        if (!string.IsNullOrWhiteSpace(filters.Query))
         {
-            var str = query.Trim().ToLower();
-            table = table.Where(el =>
-                el.Title.ToLower().Contains(str) ||
-                el.RichText.ToLower().Contains(str));
+            var str = filters.Query.Trim().ToLower();
+            query = query.Where(e =>
+                e.Title.ToLower().Contains(str) ||
+                (e.RichText != null && e.RichText.ToLower().Contains(str)));
         }
 
-        return await table
+        // selected mood
+        if (filters.SelectedMood != 0)
+            query = query.Where(e => e.PrimaryMood == filters.SelectedMood);
+
+        // selected category
+        if (filters.SelectedCategory != 0)
+            query = query.Where(e => e.Category == filters.SelectedCategory);
+
+        // start date
+        if (filters.StartDate.HasValue)
+            query = query.Where(e => e.EntryDate >= filters.StartDate.Value);
+
+        // end date
+        if (filters.EndDate.HasValue)
+            query = query.Where(e => e.EntryDate <= filters.EndDate.Value);
+
+        // tag
+        if (filters.SelectedTag != 0)
+        {
+            var entries = (await db.Table<JournalEntryTag>()
+                .Where(t => t.TagId == filters.SelectedTag)
+                .ToListAsync())
+                .Select(t => t.JournalEntryId)
+                .ToList();
+            query = query.Where(e => entries.Contains(e.Id));
+        }
+
+        // secondary moods
+        if (filters.SelectedSecondaryMood != 0)
+        {
+            var entries = (await db.Table<JournalEntryMood>()
+                .Where(t => t.MoodId == filters.SelectedSecondaryMood)
+                .ToListAsync())
+                .Select(t => t.JournalEntryId)
+                .ToList();
+            query = query.Where(e => entries.Contains(e.Id));
+        }
+        // sort and pagination
+        var items = await query
             .OrderByDescending(e => e.EntryDate)
             .Skip(offset)
-            .Take(safePerPage)
+            .Take(safePerPage + 1)
             .ToListAsync();
+
+        filters.HasNextPage = items.Count > safePerPage;
+
+        return items.Take(safePerPage).ToList();
     }
 
 

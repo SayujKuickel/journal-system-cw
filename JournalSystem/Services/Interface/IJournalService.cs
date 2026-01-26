@@ -8,7 +8,7 @@ namespace JournalSystem.Services.Interface
 {
     public interface IJournalService
     {
-        Task<List<JournalEntry>> GetItemsAsync(int page = 1, int perPage = 10, string query = "");
+        Task<List<JournalEntry>> GetItemsAsync(FilterProvider filters);
         Task<JournalEntry> GetItemAsync(Guid id);
         Task<JournalEntry> GetItemByDateAsync(DateTime date);
         Task<int> SaveItemAsync(JournalEntry item);

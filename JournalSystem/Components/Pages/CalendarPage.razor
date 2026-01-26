@@ -1,6 +1,7 @@
 ﻿@page "/calendar"
 @inject IJSRuntime JS
 @inject IJournalService JournalService
+@inject IAnalyticsService AnalyticsService
 @inject NavigationManager Nav
 @using Microsoft.JSInterop
 
@@ -8,15 +9,16 @@
     <h1 class="text-4xl font-bold"> Calendar </h1>
 
     <div id="calendar"></div>
-
 </div>
 
 @code {
     List<JournalEntry> entries;
+    StreakSummary streakData = new();
 
     protected override async Task OnInitializedAsync()
     {
-        entries = await JournalService.GetAllItems();
+        entries = await JournalService.GetAllItems(); streakData = await AnalyticsService.GetStreaksAsync();
+
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -31,11 +33,51 @@
                 @* create js entries to show *@
                 var items = entries.Select(el => new
                 {
-                    id = el.Id,
+                    id = el.Id.ToString(),
                     title = el.Title,
                     start = el.EntryDate.ToString("yyyy-MM-dd"),
+                    end = el.EntryDate.ToString("yyyy-MM-dd"),
                     color = "#481638",
                 }).ToList();
+
+
+                if (streakData.MissedDays.Count > 0)
+                {
+                    items.AddRange(streakData.MissedDays.Select(el => new
+                    {
+                        id = "missed_" + el.ToString("yyyyMMdd"),
+                        title = "Missed",
+                        start = el.ToString("yyyy-MM-dd"),
+                        end = el.ToString("yyyy-MM-dd"),
+                        color = "#dc2626",
+                    }));
+                }
+
+
+                @* add streak markers *@
+                if (streakData.CurrentStart.HasValue && streakData.CurrentEnd.HasValue)
+                {
+                    items.Add(new
+                    {
+                        id = "0",
+                        title = $"Current Streak ({streakData.CurrentCount} days)",
+                        start = streakData.CurrentStart.Value.ToString("yyyy-MM-dd"),
+                        end = streakData.CurrentEnd.Value.AddDays(1).ToString("yyyy-MM-dd"),
+                        color = "#22c55e",
+                    });
+                }
+
+                if (streakData.LongestStart.HasValue && streakData.LongestEnd.HasValue)
+                {
+                    items.Add(new
+                    {
+                        id = "1",
+                        title = $"Longest Streak ({streakData.LongestCount} days)",
+                        start = streakData.LongestStart.Value.ToString("yyyy-MM-dd"),
+                        end = streakData.LongestEnd.Value.AddDays(1).ToString("yyyy-MM-dd"),
+                        color = "#3b82f6",
+                    });
+                }
 
                 await JS.InvokeVoidAsync("createCalendarEvents", items);
             }
