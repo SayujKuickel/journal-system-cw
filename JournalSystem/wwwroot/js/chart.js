@@ -16,6 +16,7 @@ function initPieChart(id, label, labels, data) {
             "#A44A87",
             "#C460A4",
           ],
+          borderWidth: 0,
           hoverOffset: 4,
         },
       ],
@@ -36,8 +37,8 @@ function initPieChart(id, label, labels, data) {
 
 function generateGradientColors(labelsCount) {
   const colors = [];
-  const start = { r: 72, g: 22, b: 56 }; // #481638
-  const end = { r: 196, g: 96, b: 164 }; // #C460A4
+  const start = { r: 72, g: 22, b: 56 };
+  const end = { r: 196, g: 96, b: 164 };
 
   for (let i = 0; i < labelsCount; i++) {
     const r = Math.round(start.r + ((end.r - start.r) * i) / (labelsCount - 1));

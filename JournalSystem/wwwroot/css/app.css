@@ -119,3 +119,18 @@
 .rich_text_container ol {
   list-style-type: decimal;
 }
+
+.page {
+  page-break-after: always;
+}
+
+/*  */
+.dark select {
+  background: #111;
+  color: #eee;
+}
+
+.dark select option {
+  background: #111;
+  color: #eee;
+}

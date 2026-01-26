@@ -11,32 +11,32 @@
 @inject NavigationManager Nav
 
 <div class="min-h-screen flex items-center justify-center px-4">
-    <div class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+    <div class="w-full max-w-md rounded-2xl border border-input bg-card p-8 shadow-sm">
         <EditForm Model="formModel" OnValidSubmit="Register" class="space-y-6">
             <DataAnnotationsValidator />
 
             <div class="space-y-2">
-                <h2 class="text-xl font-medium text-slate-900">
+                <h2 class="text-xl font-medium text-foreground">
                     Create Account
                 </h2>
-                <p class="text-sm text-slate-600">
+                <p class="text-sm text-muted-foreground">
                     Set a username and PIN to continue
                 </p>
             </div>
 
             <div class="space-y-3">
                 <InputText placeholder="Username" @bind-Value="formModel.Username"
-                    class="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-shadow" />
+                    class="w-full rounded-lg border border-input px-4 py-2 sm:w-sm text-foreground placeholder-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-shadow" />
 
                 <InputText type="password" placeholder="PIN" @bind-Value="formModel.Pin"
-                    class="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-shadow" />
+                    class="w-full rounded-lg border border-input px-4 py-2 sm:w-sm text-foreground placeholder-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-shadow" />
 
                 <InputText type="password" placeholder="Confirm PIN" @bind-Value="formModel.ConfirmPin"
-                    class="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-shadow" />
+                    class="w-full rounded-lg border border-input px-4 py-2 sm:w-sm text-foreground placeholder-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-shadow" />
 
                 @if (!string.IsNullOrEmpty(Error))
                 {
-                    <p class="text-sm text-red-600">@Error</p>
+                    <p class="text-sm text-destructive-foreground">@Error</p>
                 }
             </div>
 

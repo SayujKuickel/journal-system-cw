@@ -1,0 +1,35 @@
+@inject IPreferenceService PreferenceService
+@inject IJSRuntime JSRuntime
+
+<button @onclick="ToggleTheme" class="@($"")">
+    <AppButton Size="sm" Variant="secondary">
+
+        @if (isDark)
+        {
+            <i class="fi fi-rr-sun flex my-0.5"></i>
+        }
+        else
+        {
+            <i class="fi fi-rr-moon-stars flex my-0.5"></i>
+        }
+    </AppButton>
+</button>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string ClassName { get; set; } = "";
+    private bool isDark;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var savedTheme = PreferenceService.GetPreference(UserPreferences.Theme);
+        isDark = savedTheme == "dark";
+    }
+
+    private async Task ToggleTheme()
+    {
+        await JSRuntime.InvokeVoidAsync("toggleTheme");
+        isDark = await JSRuntime.InvokeAsync<bool>("eval", "document.body.classList.contains('dark')");
+        PreferenceService.SetPreference(UserPreferences.Theme, isDark ? "dark" : "light");
+    }
+}

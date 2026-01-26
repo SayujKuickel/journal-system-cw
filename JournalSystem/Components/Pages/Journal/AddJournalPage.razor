@@ -10,13 +10,8 @@
 @inject IMoodService MoodService
 @inject ITagService TagService
 @inject ICategoryService CategoryService
+@inject ToastService ToastService
 
-<style>
-    .ql-toolbar {
-        border-radius: 8px;
-        margin-bottom: 8px;
-    }
-</style>
 
 <header class="space-y-2">
     <h1 class="text-4xl font-bold">
@@ -28,27 +23,25 @@
         {
             <span>Creating new Journal </span>
         }
-
     </h1>
-    <div class="text-sm text-slate-500">@formModel.EntryDate.ToString("yyyy/MM/dd")</div>
+    <div class="text-sm text-muted-foreground">@formModel.EntryDate.ToString("yyyy/MM/dd")</div>
 </header>
-
 
 <EditForm Model="formModel" OnValidSubmit="HandleSubmit" class="space-y-3 grid grid-cols-3 gap-4">
     <DataAnnotationsValidator />
 
     <section class="col-span-2 space-y-4">
         <div>
-            <label class="text-sm font-semibold text-slate-700">Title*</label>
+            <label class="text-sm font-semibold text-muted-foreground">Title*</label>
             <InputText
-                class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                class="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 @bind-Value="formModel.Title" />
             <ValidationMessage class="text-sm text-destructive" For="@(() => formModel.Title)" />
         </div>
 
         <div>
-            <label class="text-sm font-semibold text-slate-700">Content*</label>
-            <div id="editor" class="mt-2 rounded-lg border border-slate-200" style="height: 32rem;"></div>
+            <label class="text-sm font-semibold text-muted-foreground">Content*</label>
+            <div id="editor" class="mt-2 rounded-lg border border-border" style="height: 32rem;"></div>
             @if (showRichTextError)
             {
                 <div class="text-sm text-destructive">Content is required.</div>
@@ -59,9 +52,9 @@
     <aside class="flex flex-col justify-between">
         <div class="space-y-2">
             <section class="flex-1">
-                <label class="text-sm font-semibold text-slate-700">Category*</label>
+                <label class="text-sm font-semibold text-muted-foreground">Category*</label>
                 <InputSelect @bind-Value="formModel.Category"
-                    class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                    class="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
                     <option value="0">Choose</option>
                     @foreach (var item in categories)
                     {
@@ -74,9 +67,9 @@
             <section>
                 <div class="flex items-end gap-2">
                     <div class="flex-1">
-                        <label class="text-sm font-semibold text-slate-700">Mood*</label>
+                        <label class="text-sm font-semibold text-muted-foreground">Mood*</label>
                         <select @bind="currentMood"
-                            class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                            class="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
                             <option value="0">Choose</option>
                             @foreach (var mood in moods)
                             {
@@ -105,7 +98,7 @@
                         if (mood != null)
                         {
                             <span
-                                class="px-2 bg-primary/20 border border-primary rounded-lg text-nowrap hover:bg-destructive hover:text-background cursor-pointer transition-all flex items-center gap-0.5"
+                                class="px-2 bg-primary/20 border border-primary rounded-lg text-nowrap hover:bg-destructive hover:text-foreground cursor-pointer transition-all flex items-center gap-0.5"
                                 @onclick="() => RemoveMood(mood.Id)">
                                 @if (item.index == 0)
                                 {
@@ -122,9 +115,9 @@
             <section>
                 <div class="flex items-end gap-2">
                     <div class="flex-1">
-                        <label class="text-sm font-semibold text-slate-700">Tags</label>
+                        <label class="text-sm font-semibold text-muted-foreground">Tags</label>
                         <select @bind="currentTag"
-                            class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                            class="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
                             <option value="0">Choose</option>
                             @foreach (var tag in tags)
                             {
@@ -150,7 +143,7 @@
                         if (tag != null)
                         {
                             <span
-                                class="px-2 bg-primary/5 outline-2 outline-primary rounded-lg text-nowrap hover:bg-destructive hover:text-background cursor-pointer transition-all"
+                                class="px-2 bg-primary/5 outline-2 outline-primary rounded-lg text-nowrap hover:bg-destructive hover:text-foreground cursor-pointer transition-all"
                                 @onclick="() => RemoveTag(tagId)">
                                 @tag.Name
                             </span>
@@ -161,10 +154,7 @@
             </section>
         </div>
 
-        @* <ValidationSummary /> *@
-
         <div class="flex flex-wrap justify-end gap-3">
-
             <button type="button" @onclick='() => Nav.NavigateTo(SiteRoutes.Journal)'>
                 <AppButton Variant="outline" ClassName="min-w-[8rem]">Cancel</AppButton>
             </button>
@@ -175,6 +165,7 @@
         </div>
     </aside>
 </EditForm>
+
 
 @* Mood handler *@
 @code {
@@ -227,7 +218,8 @@
     {
         var richText = await JS.InvokeAsync<string>("getQuillHtml");
 
-        if (string.IsNullOrWhiteSpace(richText))
+        var plain = System.Text.RegularExpressions.Regex.Replace(richText ?? "", "<.*?>", "").Trim();
+        if (string.IsNullOrWhiteSpace(plain))
         {
             showRichTextError = true;
             return;
@@ -235,20 +227,19 @@
 
         showRichTextError = false;
 
-        // EDIT MODE
         if (Guid.TryParse(Id, out var guid))
         {
             await JournalService.UpdateJournalEntry(guid, formModel, richText);
+            ToastService.Show("Journal Edited Successfully!", ToastType.Success);
         }
-        // CREATE MODE
         else
         {
             await JournalService.SaveJournalEntry(formModel, richText);
+            ToastService.Show("Journal created Successfully!", ToastType.Success);
         }
 
         Nav.NavigateTo(SiteRoutes.Journal);
     }
-
 }
 
 @* initialzier *@
@@ -314,16 +305,32 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (!quillReady)
         {
-            await JS.InvokeVoidAsync("initQuill", "editor");
-            quillReady = true;
-
-            if (pendingRichText != null)
+            try
             {
-                await JS.InvokeVoidAsync("setQuillHtml", pendingRichText);
-                pendingRichText = null;
+                await JS.InvokeVoidAsync("initQuill", "editor");
+                quillReady = true;
+
+                if (!string.IsNullOrWhiteSpace(pendingRichText))
+                {
+                    await JS.InvokeVoidAsync("setQuillHtml", pendingRichText);
+                    pendingRichText = null;
+                }
+
+                return;
+            }
+            catch
+            {
+                return;
             }
         }
+
+        if (!string.IsNullOrWhiteSpace(pendingRichText))
+        {
+            await JS.InvokeVoidAsync("setQuillHtml", pendingRichText);
+            pendingRichText = null;
+        }
     }
+
 }

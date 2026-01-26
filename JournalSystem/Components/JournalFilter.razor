@@ -1,0 +1,102 @@
+<section class="absolute top-full right-0 mt-4 p-4 bg-card rounded-lg border w-80 border-input space-y-2 shadow">
+    <p class="text-lg font-bold text-foreground">Filters</p>
+
+    <div>
+        <label class="text-sm font-semibold text-muted-foreground">Per Page</label>
+        <input type="text"
+            class="mt-1 w-full rounded-lg border border-input px-3 py-2 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            @bind="Filters.PageSize" />
+    </div>
+
+    <div>
+        <label class="text-sm font-semibold text-muted-foreground">Tags</label>
+        <select @bind="Filters.SelectedTag"
+            class="mt-1 w-full rounded-lg border border-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+            <option value="0">Choose</option>
+            @foreach (var item in AllTags)
+            {
+                <option value="@item.Id">@item.Name</option>
+            }
+        </select>
+    </div>
+
+    <div class="grid grid-cols-2 gap-2">
+        <div>
+            <label class="text-sm font-semibold text-muted-foreground">Primary Mood</label>
+            <select @bind="Filters.SelectedMood"
+                class="mt-1 w-full rounded-lg border border-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                <option value="0">Choose</option>
+                @foreach (var item in AllMoods)
+                {
+                    <option value="@item.Id">@item.Name</option>
+                }
+            </select>
+        </div>
+        <div>
+            <label class="text-sm font-semibold text-muted-foreground">Secondary Mood</label>
+            <select @bind="Filters.SelectedSecondaryMood"
+                class="mt-1 w-full rounded-lg border border-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                <option value="0">Choose</option>
+                @foreach (var item in AllMoods)
+                {
+                    <option value="@item.Id">@item.Name</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <div>
+        <label class="text-sm font-semibold text-muted-foreground">Category</label>
+        <select @bind="Filters.SelectedCategory"
+            class="mt-1 w-full rounded-lg border border-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+            <option value="0">Choose</option>
+            @foreach (var item in AllCategories)
+            {
+                <option value="@item.Id">@item.Name</option>
+            }
+        </select>
+    </div>
+
+    <div class="grid grid-cols-2 gap-2">
+        <div>
+            <label class="text-sm font-semibold text-muted-foreground">Start Date</label>
+            <input
+                class="mt-1 w-full rounded-lg border border-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                type="date" @bind="Filters.StartDate">
+        </div>
+        <div>
+            <label class="text-sm font-semibold text-muted-foreground">End Date</label>
+            <input
+                class="mt-1 w-full rounded-lg border border-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                type="date" @bind="Filters.EndDate">
+        </div>
+    </div>
+
+    <div class="flex items-center justify-end gap-2 mt-3">
+        <button @onclick="ApplyFilters">
+            <AppButton>Apply Filters</AppButton>
+        </button>
+        <button @onclick="ClearFilters">
+            <AppButton Variant="destructive">Clear</AppButton>
+        </button>
+    </div>
+</section>
+
+@code {
+    [Parameter] public FilterProvider Filters { get; set; } = new();
+    [Parameter] public List<Category> AllCategories { get; set; } = new();
+    [Parameter] public List<Mood> AllMoods { get; set; } = new();
+    [Parameter] public List<Tag> AllTags { get; set; } = new();
+    [Parameter] public EventCallback OnApplyFilters { get; set; }
+    [Parameter] public EventCallback OnClearFilters { get; set; }
+
+    private async Task ApplyFilters()
+    {
+        await OnApplyFilters.InvokeAsync();
+    }
+
+    private async Task ClearFilters()
+    {
+        await OnClearFilters.InvokeAsync();
+    }
+}

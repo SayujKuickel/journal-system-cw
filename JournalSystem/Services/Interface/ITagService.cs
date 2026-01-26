@@ -4,5 +4,7 @@ namespace JournalSystem.Services;
 
 public interface ITagService
 {
-    public Task<List<Tag>> GetItemsAsync();
+    Task<List<Tag>> GetItemsAsync();
+    Task<Tag> GetItemAsync(int id);
+    Task<bool> CreateTagAsync(string name);
 }

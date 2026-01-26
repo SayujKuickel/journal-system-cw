@@ -1,0 +1,32 @@
+@inject ToastService ToastService
+
+@if (_toast is not null)
+{
+    <div class="fixed top-4 right-4 px-4 py-2 rounded shadow
+            @(_toast.Type == ToastType.Success ? "bg-green-600" :
+                    _toast.Type == ToastType.Error ? "bg-red-600" :
+                    "bg-slate-700")">
+        @_toast.Message
+    </div>
+}
+
+@code {
+    ToastMessage? _toast;
+
+    protected override void OnInitialized()
+    {
+        ToastService.OnShow += toast =>
+        {
+            _toast = toast;
+            StateHasChanged();
+            _ = HideLater();
+        };
+    }
+
+    async Task HideLater()
+    {
+        await Task.Delay(3000);
+        _toast = null;
+        StateHasChanged();
+    }
+}

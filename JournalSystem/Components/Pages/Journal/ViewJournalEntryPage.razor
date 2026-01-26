@@ -6,6 +6,8 @@
 @inject IMoodService MoodService
 @inject ITagService TagService
 @inject ICategoryService CategoryService
+@inject IJournalExportService JournalExportService
+@inject ToastService ToastService
 
 @if (journal == null)
 {
@@ -85,7 +87,7 @@ else
                     </p>
                 </section>
 
-                <section class="flex items-center gap-2 mt-4">
+                <section class="grid grid-cols-2 gap-3 mt-6">
                     <a class="flex-1 block" href="@SiteRoutes.AddJournal/@journal.Id">
                         <AppButton Variant="outline" ClassName="flex-1">
                             <i class="fi fi-rr-edit"></i>
@@ -96,6 +98,12 @@ else
                     <button class="flex-1" @onclick="HandleDelete">
                         <AppButton Variant="destructive" ClassName="flex-1">
                             <i class="fi fi-rr-trash"></i>Delete
+                        </AppButton>
+                    </button>
+
+                    <button @onclick="ExportPdf" class="col-span-2 w-full">
+                        <AppButton Variant="primary">
+                            <i class="fi fi-rr-file-export"></i> Export PDF
                         </AppButton>
                     </button>
                 </section>
@@ -146,13 +154,28 @@ else
         await JournalService.DeleteItemAsync(journal);
         Nav.NavigateTo(SiteRoutes.Journal);
     }
+
+    async Task ExportPdf()
+    {
+        var ids = new[] { journal.Id };
+
+        var exportData = await JournalExportService.BuildJournalExport(ids);
+
+
+        await JS.InvokeVoidAsync(
+        "exportJournalsToPdf",
+        exportData
+        );
+        ToastService.Show("Journal Exported Successfully!", ToastType.Success);
+    }
+
+
 }
 
 @code {
     List<Mood> allMoods = [];
     List<Tag> allTags = [];
     List<Category> allCategories = [];
-    List<JournalEntry> entries = [];
 
     Mood? primaryMood => allMoods.FirstOrDefault(m => m.Id == journal.PrimaryMood);
     Category? category => allCategories.FirstOrDefault(c => c.Id == journal.Category);

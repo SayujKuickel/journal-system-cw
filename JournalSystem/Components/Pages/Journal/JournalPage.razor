@@ -4,6 +4,9 @@
 @inject IMoodService MoodService
 @inject ITagService TagService
 @inject ICategoryService CategoryService
+@inject IJournalExportService JournalExportService
+@inject IJSRuntime JS
+@inject ToastService ToastService
 
 <div class="space-y-4">
 
@@ -14,7 +17,8 @@
     <section class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-2">
             <input @bind="filters.Query" placeholder="Type here to search."
-                class="w-full rounded-lg border border-slate-300 px-4 py-2 sm:w-sm text-slate-900 placeholder-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-shadow" />
+                class="w-full rounded-lg border border-border px-4 py-2 sm:w-sm text-foreground placeholder-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-shadow" />
+
             <button @onclick="ApplyFilters">
                 <AppButton Variant="outline">Search</AppButton>
             </button>
@@ -29,114 +33,26 @@
 
                 @if (isPopoverShown)
                 {
-
-                    <section
-                        class="absolute top-full right-0 mt-4 p-4 bg-card bg-card-foregroun rounded-lg border w-80 border-input space-y-2 shadow">
-                        <p class="text-lg font-bold">Filters</p>
-
-
-                        <div class="">
-                            <label class="text-sm font-semibold text-slate-700">Tags</label>
-
-                            <select @bind="filters.SelectedTag"
-                                class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
-                                <option value="0">Choose</option>
-                                @foreach (var item in allTags)
-                                {
-                                    <option value="@item.Id">@item.Name</option>
-                                }
-                            </select>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-2">
-                            <div class="">
-                                <label class="text-sm font-semibold text-slate-700">Primary Mood</label>
-                                <select @bind="filters.SelectedMood"
-                                    class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
-                                    <option value="0">Choose</option>
-                                    @foreach (var item in allMoods)
-                                    {
-                                        <option value="@item.Id">@item.Name</option>
-                                    }
-                                </select>
-                            </div>
-
-                            <div class="">
-                                <label class="text-sm font-semibold text-slate-700">Secondary Mood</label>
-                                <select @bind="filters.SelectedSecondaryMood"
-                                    class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
-                                    <option value="0">Choose</option>
-                                    @foreach (var item in allMoods)
-                                    {
-                                        <option value="@item.Id">@item.Name</option>
-                                    }
-                                </select>
-                            </div>
-
-                        </div>
-
-
-                        <div class="">
-                            <label class="text-sm font-semibold text-slate-700">Category</label>
-                            <select @bind="filters.SelectedCategory"
-                                class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
-                                <option value="0">Choose</option>
-                                @foreach (var item in allCategories)
-                                {
-                                    <option value="@item.Id">@item.Name</option>
-                                }
-                            </select>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-2">
-
-                            <div class="">
-                                <label class="text-sm font-semibold text-slate-700">Start Date</label>
-                                <input
-                                    class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                                    type="date" @bind="filters.StartDate">
-                            </div>
-
-                            <div class="">
-                                <label class="text-sm font-semibold text-slate-700">End Date</label>
-                                <input
-                                    class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                                    type="date" @bind="filters.EndDate">
-                            </div>
-                        </div>
-
-
-                        <div class="flex items-center justify-end gap-2 mt-3">
-                            <button @onclick="ApplyFilters">
-                                <AppButton>Apply Filters</AppButton>
-                            </button>
-                            <button class="" @onclick="ClearFilters">
-                                <AppButton Variant="destructive">Clear</AppButton>
-                            </button>
-                        </div>
-                    </section>
+                    <JournalFilter Filters="filters" AllCategories="allCategories" AllMoods="allMoods" AllTags="allTags"
+                        OnApplyFilters="ApplyFilters" OnClearFilters="ClearFilters" />
                 }
             </div>
         </div>
 
+        <div class="flex items-center gap-2">
+            <button @onclick="ExportCurrentPage">
+                <AppButton Variant="secondary">
+                    <i class="fi fi-rr-file-pdf"></i> Export All Results
+                </AppButton>
+            </button>
 
-        <a href="@SiteRoutes.AddJournal">
-            <AppButton>
-                + Add Journal
-            </AppButton>
-        </a>
+            <a href="@SiteRoutes.AddJournal">
+                <AppButton>
+                    + Add Journal
+                </AppButton>
+            </a>
+        </div>
     </section>
-    @* <div class="">
-        <p>PageSize @filters.PageSize</p>
-        <p>Page @filters.Page</p>
-        <p>HasNextPage @filters.HasNextPage</p>
-        <p>Query @filters.Query</p>
-        <p>StartDate @filters.StartDate</p>
-        <p>EndDate @filters.EndDate</p>
-        <p>SelectedTag @filters.SelectedTag</p>
-        <p>SelectedCategory @filters.SelectedCategory</p>
-        <p>SelectedMood @filters.SelectedMood</p>
-    </div> *@
 
     @if (entries is null)
     {
@@ -157,8 +73,8 @@
         </div>
 
         <div class="flex items-center gap-4 justify-between">
-            <p>
-                Page @filters.Page
+            <p class="text-sm text-muted-foreground">
+                Page @filters.Page ~ Showing @entries.Count of @filters.PageSize items
             </p>
 
             <div class="flex items-center gap-1">
@@ -173,9 +89,7 @@
                     </AppButton>
                 </button>
             </div>
-
         </div>
-
     }
 
 </div>
@@ -204,6 +118,7 @@
 
         entries = result;
         filters.HasNextPage = result.Count == filters.PageSize;
+        ToastService.Show("Data fetched successfully!", ToastType.Success);
     }
 }
 
@@ -228,6 +143,8 @@
         isPopoverShown = false;
         filters.Page = 1;
         await LoadData(1);
+
+
     }
 
     async Task ClearFilters()
@@ -236,9 +153,25 @@
 
         filters = new();
         await LoadData(1);
+        ToastService.Show("Filters Cleared successfully!", ToastType.Success);
+
     }
 
+    async Task ExportCurrentPage()
+    {
+        if (entries == null || entries.Count == 0)
+            return;
 
+        var ids = entries.Select(e => e.Id);
+        var exportDtos = await JournalExportService
+        .BuildJournalExport(ids);
+
+        await JS.InvokeVoidAsync(
+        "exportJournalsToPdf",
+        exportDtos
+        );
+        ToastService.Show($"{ids.Count()} items exported successfully!", ToastType.Success);
+    }
 }
 
 @* popover logic  *@

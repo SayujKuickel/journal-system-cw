@@ -1,23 +1,29 @@
 let quill;
 
 window.initQuill = (editorId) => {
-    quill = new Quill(`#${editorId}`, {
-        theme: 'snow',
-        modules: {
-            toolbar: [
-                ['bold', 'italic', 'underline', 'strike'],
-                [{ list: "ordered" }, { list: "bullet" }], 
-                [{ header: [1, 2, 3, false] }],
-                ["clean"]
-            ]
-        }
-    });
+  if (quill) return;
+
+  const el = document.getElementById(editorId);
+  if (!el) return;
+
+  quill = new Quill(el, {
+    theme: "snow",
+    modules: {
+      toolbar: [
+        ["bold", "italic", "underline", "strike", "link"],
+        [{ list: "ordered" }, { list: "bullet" }],
+        [{ header: [2, 3, 4, false] }],
+        ["clean"],
+      ],
+    },
+  });
 };
 
 window.getQuillHtml = () => {
-    return quill.root.innerHTML;
-}
+  return quill ? quill.root.innerHTML : "";
+};
 
 window.setQuillHtml = (html) => {
-    quill.root.innerHTML = html;
-}
+  if (!quill) return;
+  quill.root.innerHTML = html;
+};

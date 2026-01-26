@@ -1,11 +1,45 @@
 @inherits LayoutComponentBase
 
 <div class="flex h-screen overflow-hidden">
-    <Sidebar />
+    @if (isSidebarShown)
+    {
+        <Sidebar />
+    }
 
     <main class="flex-1 overflow-y-auto scrollbar-hide">
-        <div class="max-w-[96rem] p-4 min-h-full">
+        <header class="sticky top-0 bg-secondary px-2 py-1">
+            <div class="flex items-center justify-between">
+                <button @onclick="HandleToggleSidebar">
+                    <AppButton Size="sm" Variant="secondary">
+                        @if (isSidebarShown)
+                        {
+
+                            <i class="fi fi-rr-sidebar"></i>
+                        }
+                        else
+                        {
+
+                            <i class="fi fi-rr-sidebar-flip"></i>
+                        }
+
+                    </AppButton>
+                </button>
+                <ToggleThemeButton />
+            </div>
+        </header>
+        <div class="max-w-[96rem] p-4 min-h-full mx-auto">
             @Body
         </div>
     </main>
 </div>
+
+<ToastProvider />
+
+@code {
+    bool isSidebarShown = true;
+
+    void HandleToggleSidebar()
+    {
+        isSidebarShown = !isSidebarShown;
+    }
+}

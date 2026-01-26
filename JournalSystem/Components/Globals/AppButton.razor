@@ -1,20 +1,33 @@
-<span class="@($"{BaseClass} ${ClassName} {VariantClass}")">
+<span class="@($"{BaseClass} {SizeClass} {ClassName} {VariantClass}")">
     @ChildContent
 </span>
 
 @code {
     [Parameter] public RenderFragment? ChildContent { get; set; }
-    [Parameter] public string Variant { get; set; } = "primary";
+    [Parameter] public string Variant { get; set; } = "base";
+    [Parameter] public string Size { get; set; } = "base";
     [Parameter] public string ClassName { get; set; } = "";
 
-    private const string BaseClass = "flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold cursor-pointer";
+    private const string BaseClass =
+    "flex items-center justify-center gap-2 rounded-lg font-semibold cursor-pointer transition-all duration-200 active:scale-95";
+
+    private string SizeClass => Size.ToLowerInvariant() switch
+    {
+        "xs" => "px-2 py-1 text-xs",
+        "sm" => "px-3 py-1.5 text-sm",
+        "base" => "px-4 py-2.5 text-sm",
+        _ => "px-4 py-2.5 text-sm"
+    };
 
     private string VariantClass => Variant.ToLowerInvariant() switch
     {
-        "secondary" => "bg-secondary text-secondary-foreground hover:bg-secondary/90",
-        "outline" => "border border-primary text-primary hover:bg-primary/10",
-        "destructive" => "bg-red-600 text-white hover:bg-red-700",
-        _ => "bg-primary text-primary-foreground hover:brightness-105"
+        "secondary" =>
+        "bg-secondary text-secondary-foreground hover:bg-primary/20 border border-border shadow-sm",
+        "outline" =>
+        "border-2 border-primary text-foreground hover:bg-primary hover:text-primary-foreground shadow-sm",
+        "destructive" =>
+        "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-md",
+        _ =>
+        "bg-primary text-primary-foreground hover:bg-primary/90 shadow-md hover:shadow-lg"
     };
-
 }

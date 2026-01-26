@@ -1,13 +1,22 @@
 @using JournalSystem.Models
 @inject IJournalService JournalService
 
-<div class="group bg-white rounded-lg p-4">
+<div class="group bg-secondary rounded-lg p-4">
     <section class="flex flex-col justify-between h-full">
         <div class="flex justify-between items-start mb-3">
             <div class="flex flex-col">
-                <span class="text-[12px] font-semibold text-primary uppercase">
-                    @Entry.EntryDate.ToString("MMMM dd, yyyy")
-                </span>
+                <div class="flex items-center gap-2">
+                    <span class="text-[12px] font-semibold text-accent uppercase">
+                        @Entry.EntryDate.ToString("MMMM dd, yyyy")
+                    </span>
+
+                    @if (Category is not null)
+                    {
+                        <span class="px-2 py-0.5 bg-card rounded text-[10px] font-bold">
+                            @Category.Name.ToUpper()
+                        </span>
+                    }
+                </div>
                 <h3 class="text-foreground text-lg font-bold mt-1 line-clamp-2">
                     @Entry.Title
                 </h3>
@@ -28,17 +37,14 @@
                         {
                             var moodId = secondaryMoods[i];
                             var el = AllMoods.FirstOrDefault(m => m.Id == moodId);
+                            if (el is null) continue;
 
-                            if (el is not null)
-                            {
-                                <span class="text-[12px]">
-                                    @el.Name@(i < lastIndex ? "," : "")
-                                </span>
-                            }
+                            <span class="text-[12px] text-foreground">
+                                @el.Name@(i < lastIndex ? "," : "")
+                            </span>
                         }
                     }
                 </p>
-
             </div>
         </div>
 
@@ -49,16 +55,18 @@
             </div>
         }
 
-        <div class="flex items-center justify-between">
-            <div class="flex gap-2 flex-wrap">
-                @if (Category is not null)
+        <div class="flex items-end justify-between">
+            <div class="flex gap-x-2 flex-wrap mb-2 max-w-3/4">
+                @if (tags.Any())
                 {
-                    <span class="px-2 py-0.5 bg-primary/10 text-primary rounded text-[10px] font-bold">
-                        @Category.Name.ToUpper()
-                    </span>
+                    @foreach (int tag in tags)
+                    {
+                        var el = AllTags.FirstOrDefault(el => el.Id == tag);
+                        if (el is null) continue;
+                        <span class="text-nowrap text-xs text-foreground"> #@el.Name </span>
+                    }
                 }
             </div>
-
             <a href="@($"{SiteRoutes.ViewJournal}/{Entry.Id}")">
                 <AppButton Variant="secondary">
                     View Entry <i class="fi fi-rr-angle-small-right"></i>
@@ -66,19 +74,7 @@
             </a>
         </div>
 
-        <div class="flex gap-2 flex-wrap mb-2">
-            @if (tags.Any())
-            {
-                @foreach (int tag in tags)
-                {
-                    var el = AllTags.FirstOrDefault(el => el.Id == tag);
-                    if (el != null)
-                    {
-                        <span class="px-2 bg-primary/5 outline-2 outline-primary rounded-lg text-nowrap text-xs">#@el.Name</span>
-                    }
-                }
-            }
-        </div>
+
     </section>
 </div>
 

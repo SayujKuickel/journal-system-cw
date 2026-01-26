@@ -21,4 +21,24 @@ public class TagService : ITagService
 
         return await db.Table<Tag>().FirstOrDefaultAsync(e => e.Id == id);
     }
+
+    public async Task<bool> CreateTagAsync(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return false;
+
+        name = name.Trim();
+
+        var db = await Db();
+
+        var exists = await db.Table<Tag>()
+            .Where(t => t.Name == name)
+            .FirstOrDefaultAsync();
+
+        if (exists != null)
+            return false;
+
+        await db.InsertAsync(new Tag { Name = name });
+        return true;
+    }
 }
