@@ -1,0 +1,23 @@
+<div class="p-4 bg-primary text-primary-foreground rounded-lg">
+    <h2 class="text-2xl font-semibold mb-5">@Title</h2>
+
+    <div class="text-6xl flex gap-2 items-end">
+        @if (!string.IsNullOrWhiteSpace(Icon))
+        {
+            <i class="@Icon"></i>
+        }
+        <p>@Value</p>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Subtext))
+    {
+        <span class="text-xs mt-4 block">@Subtext</span>
+    }
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public string Icon { get; set; } = string.Empty;
+    [Parameter] public string Subtext { get; set; } = string.Empty;
+}

@@ -8,6 +8,5 @@ public interface IAnalyticsService
     Task<List<TopTagsResult>> GetTopUsedTags();
     Task<List<CategoryBreakdownResult>> GetCategoryBreakdown();
     Task<StreakSummary> GetStreaksAsync();
-    Task<List<WordCountTrendResult>> GetWordCountTrendsAsync();
+    Task<List<WordCountResult>> GetTopWordsAsync(int top = 10);
 }
-

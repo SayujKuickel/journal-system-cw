@@ -1,5 +1,6 @@
 function initPieChart(id, label, labels, data) {
   const ctx = document.getElementById(id);
+  const barColors = generateGradientColors(labels.length);
 
   new Chart(ctx, {
     type: "pie",
@@ -9,13 +10,7 @@ function initPieChart(id, label, labels, data) {
         {
           label: label,
           data: data,
-          backgroundColor: [
-            "#481638",
-            "#652551",
-            "#84366B",
-            "#A44A87",
-            "#C460A4",
-          ],
+          backgroundColor: barColors,
           borderWidth: 0,
           hoverOffset: 4,
         },

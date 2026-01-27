@@ -1,7 +1,7 @@
 @page "/analytics"
 @inject IAnalyticsService AnalyticsService
 
-<div class="space-y-4">
+<div class="space-y-6">
     <h1 class="text-4xl font-bold mb-6">
         Analytics
     </h1>
@@ -12,87 +12,42 @@
     }
     else
     {
-        <div class="grid grid-cols-4 gap-4">
+        <div class="grid grid-cols-3 gap-y-6 gap-x-4">
             @if (streakData.LongestCount > 0)
             {
-                <div class="p-4 bg-primary text-primary-foreground rounded-lg">
-                    <h2 class="text-2xl font-semibold mb-5">Longest Streak</h2>
-                    <div class="text-7xl flex gap-2 items-end">
-
-                        <i class="fi fi-rr-flame"></i>
-                        <p>
-                            @streakData.LongestCount
-                        </p>
-                    </div>
-                    <span class="text-xs mt-4 block">
-                        @streakData.LongestStart?.ToString("MMM dd, yyyy") to @streakData.LongestEnd?.ToString("MMM dd, yyyy")
-                    </span>
-                </div>
+                <AnalyticsCard Title="Longest Streak" Value="@streakData.LongestCount.ToString()" Icon="fi fi-rr-flame"
+                    Subtext="@($"{streakData.LongestStart:MMM dd, yyyy} to {streakData.LongestEnd:MMM dd, yyyy}")" />
             }
 
             @if (streakData.CurrentCount > 0)
             {
-                <div class="p-4 bg-primary text-primary-foreground rounded-lg">
-                    <h2 class="text-2xl font-semibold mb-5">Current Streak</h2>
-                    <div class="text-7xl flex gap-2 items-end">
-
-                        <i class="fi fi-rr-fire-flame-curved"></i>
-                        <p>
-                            @streakData.CurrentCount
-                        </p>
-                    </div>
-                    <span class="text-xs mt-4 block">
-                        @streakData.CurrentStart?.ToString("MMM dd, yyyy") to today
-                    </span>
-                </div>
+                <AnalyticsCard Title="Current Streak" Value="@streakData.CurrentCount.ToString()"
+                    Icon="fi fi-rr-fire-flame-curved" Subtext="@($"{streakData.CurrentStart:MMM dd, yyyy} to today")" />
             }
 
-            <div class="p-4 bg-primary text-primary-foreground rounded-lg">
-                <h2 class="text-2xl font-semibold mb-5">Top Tag</h2>
-                <div class="text-7xl flex gap-2 items-end">
+            @if (topTags.Any())
+            {
+                <AnalyticsCard Title="Top Tag" Value="@topTags[0].Tag.Name" Icon="fi fi-rr-tags"
+                    Subtext="@($"Used {@topTags[0].Count.ToString()} times.")" />
+            }
 
-                    <i class="fi fi-rr-tags"></i>
-                    <p>
-                        @topTags[0].Count
-                    </p>
-                </div>
-                <span class="text-xs mt-4 block">
-                    @topTags[0].Tag.Name
+            @if (categoryBreakdown.Any())
+            {
+                <AnalyticsCard Title="Top Category" Value="@categoryBreakdown[0].CategoryName" Icon="fi fi-rr-bookmark"
+                    Subtext="@($"Used {categoryBreakdown[0].Count.ToString()} times - {Math.Clamp(categoryBreakdown[0].Percentage, 0, 100):0.##}%")" />
+            }
 
-                </span>
-            </div>
-            <div class="p-4 bg-primary text-primary-foreground rounded-lg">
-                <h2 class="text-2xl font-semibold mb-5">Top Category</h2>
-                <div class="text-7xl flex gap-2 items-end">
+            @if (topWords.Any())
+            {
+                <AnalyticsCard Title="Top Word" Value="@topWords[0].Name" Icon="fi fi-rr-text"
+                    Subtext="@($"Used {topWords[0].WordCount} times.")" />
+            }
 
-                    <i class="fi fi-rr-bookmark"></i>
-
-                    <p>
-                        @categoryBreakdown[0].Count
-                    </p>
-                </div>
-                <span class="text-xs mt-4 block">
-                    @categoryBreakdown[0].CategoryName
-                    -
-                    @Math.Clamp(categoryBreakdown[0].Percentage, 0, 100).ToString("0.##")
-                    %
-                </span>
-            </div>
-            <div class="p-4 bg-primary text-primary-foreground rounded-lg">
-                <h2 class="text-2xl font-semibold mb-5">Missed Days</h2>
-                <div class="text-7xl flex gap-2 items-end">
-
-                    <i class="fi fi-rr-house-day"></i>
-
-                    <p>@streakData.MissedDays.Count </p>
-                </div>
-                <span class="text-xs mt-4 block">
-                    Number of days missed.
-                </span>
-            </div>
+            <AnalyticsCard Title="Missed Days" Value="@streakData.MissedDays.Count.ToString()" Icon="fi fi-rr-house-day"
+                Subtext="Number of days missed." />
         </div>
 
-        <div class="grid grid-cols-6 gap-6">
+        <div class="grid grid-cols-6 gap-8">
 
             <div class="col-span-2">
                 <h2 class="text-2xl font-semibold mb-2">Mood Distribution</h2>
@@ -104,9 +59,14 @@
                 <TopTagsChart Tags="topTags" />
             </div>
 
-            <div class="col-span-6 max-h-96">
+            <div class="col-span-4 max-h-96">
                 <h2 class="text-2xl font-semibold mb-2">Percentage of Journal Per Category</h2>
                 <CategoryBreakdownChart CategoryBreakdown="categoryBreakdown" />
+            </div>
+
+            <div class="col-span-2 max-h-96">
+                <h2 class="text-2xl font-semibold mb-2">Most Used Words</h2>
+                <TopWordsChart Words="topWords" />
             </div>
 
         </div>
@@ -120,6 +80,7 @@
     List<TopTagsResult> topTags = [];
     List<CategoryBreakdownResult> categoryBreakdown = [];
     StreakSummary streakData = new();
+    List<WordCountResult> topWords = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -127,6 +88,7 @@
         topTags = await AnalyticsService.GetTopUsedTags();
         categoryBreakdown = await AnalyticsService.GetCategoryBreakdown();
         streakData = await AnalyticsService.GetStreaksAsync();
+        topWords = await AnalyticsService.GetTopWordsAsync(10);
         isLoading = false;
     }
 }

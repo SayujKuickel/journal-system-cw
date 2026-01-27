@@ -40,9 +40,3 @@ public sealed class StreakSummary
     public List<DateTime> MissedDays { get; init; } = new();
 }
 
-public class WordCountTrendResult
-{
-    public DateTime Date { get; set; }
-    public double AverageWords { get; set; }
-}
-

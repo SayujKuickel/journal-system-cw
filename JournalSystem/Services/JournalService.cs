@@ -1,23 +1,8 @@
-﻿using JournalSystem.Components.Pages.Auth;
-using JournalSystem.Models;
+﻿using JournalSystem.Models;
 using JournalSystem.Services.Interface;
 using SQLite;
 
 namespace JournalSystem.Services;
-
-public class FilterProvider
-{
-    public int PageSize = 6;
-    public int Page = 1;
-    public bool HasNextPage = false;
-    public string Query = String.Empty;
-    public DateTime? StartDate;
-    public DateTime? EndDate;
-    public int SelectedTag;
-    public int SelectedCategory;
-    public int SelectedMood;
-    public int SelectedSecondaryMood;
-}
 
 public class JournalService : IJournalService
 {

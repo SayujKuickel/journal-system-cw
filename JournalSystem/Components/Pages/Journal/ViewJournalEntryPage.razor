@@ -17,7 +17,7 @@ else
 {
     <article class="space-y-4">
         <header class="space-y-2">
-            <p class="text-sm text-slate-500">@journal.EntryDate.ToString("yyyy/MM/dd")</p>
+            <p class="text-sm text-muted-foreground">@journal.EntryDate.ToString("yyyy/MM/dd")</p>
 
             <h1 class="text-4xl font-bold max-w-3xl">@journal.Title</h1>
         </header>
@@ -160,7 +160,6 @@ else
         var ids = new[] { journal.Id };
 
         var exportData = await JournalExportService.BuildJournalExport(ids);
-
 
         await JS.InvokeVoidAsync(
         "exportJournalsToPdf",

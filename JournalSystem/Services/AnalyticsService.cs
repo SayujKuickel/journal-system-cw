@@ -2,6 +2,8 @@ using JournalSystem.Components.Pages.Auth;
 using JournalSystem.Models;
 using JournalSystem.Services.Interface;
 using SQLite;
+using System.Net;
+using System.Text.RegularExpressions;
 namespace JournalSystem.Services;
 
 public class AnalyticsService : IAnalyticsService
@@ -9,12 +11,16 @@ public class AnalyticsService : IAnalyticsService
     private async Task<SQLiteAsyncConnection> Db()
     => await DatabaseService.GetConnectionAsync();
 
+    private static readonly Regex HtmlTagRegex =
+        new(@"<[^>]+>", RegexOptions.Singleline);
+
+    private static readonly Regex WordRegex =
+        new(@"[\p{L}\p{Nd}]+", RegexOptions.CultureInvariant);
+
     readonly JournalService journalService;
-    readonly TagService tagService;
 
     public AnalyticsService()
     {
-        tagService = new();
         journalService = new();
     }
 
@@ -214,30 +220,47 @@ public class AnalyticsService : IAnalyticsService
         };
     }
 
-    public async Task<List<WordCountTrendResult>> GetWordCountTrendsAsync()
+    public async Task<List<WordCountResult>> GetTopWordsAsync(int top = 10)
     {
+        var safeTop = Math.Clamp(top, 1, 100);
+
         var db = await Db();
-        var entries = await db.Table<JournalEntry>()
-            .OrderBy(e => e.EntryDate)
-            .ToListAsync();
+        var entries = await db.Table<JournalEntry>().ToListAsync();
+        if (entries.Count == 0) return [];
 
-        var trends = entries
-            .GroupBy(e => e.EntryDate.Date)
-            .Select(g =>
+        var frequencies = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var entry in entries)
+        {
+            var plainText = ExtractPlainTextFromHtml(entry.RichText);
+            if (plainText.Length == 0)
+                continue;
+
+            foreach (Match match in WordRegex.Matches(plainText))
             {
-                var totalWords = g.Sum(e => string.IsNullOrWhiteSpace(e.RichText) ? 0 : e.RichText.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length);
+                var word = match.Value.ToLowerInvariant();
 
-                var avgWords = g.Count() > 0 ? (double)totalWords / g.Count() : 0;
+                if (!frequencies.TryAdd(word, 1))
+                    frequencies[word]++;
+            }
+        }
 
-                return new WordCountTrendResult
-                {
-                    Date = g.Key,
-                    AverageWords = avgWords
-                };
-            })
-            .OrderBy(r => r.Date)
+        if (frequencies.Count == 0)
+            return [];
+
+        return frequencies
+            .OrderByDescending(el => el.Value)
+            .ThenBy(el => el.Key, StringComparer.OrdinalIgnoreCase)
+            .Take(safeTop)
+            .Select(el => new WordCountResult { Name = el.Key, WordCount = el.Value })
             .ToList();
+    }
 
-        return trends;
+    private static string ExtractPlainTextFromHtml(string? html)
+    {
+        if (string.IsNullOrWhiteSpace(html)) return string.Empty;
+
+        var withoutTags = HtmlTagRegex.Replace(html, " ");
+        return WebUtility.HtmlDecode(withoutTags).Replace('\u00A0', ' ').Trim();
     }
 }

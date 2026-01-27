@@ -162,7 +162,7 @@
         if (entries == null || entries.Count == 0)
             return;
 
-        var ids = entries.Select(e => e.Id);
+        var ids = entries.OrderByDescending(e => e.EntryDate).Select(e => e.Id);
         var exportDtos = await JournalExportService
         .BuildJournalExport(ids);
 
