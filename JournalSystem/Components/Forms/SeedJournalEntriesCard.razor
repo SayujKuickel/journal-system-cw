@@ -1,0 +1,46 @@
+@inject ToastService ToastService
+
+<div class="p-4 border bg-card border-border rounded-lg">
+    <h3 class="mb-3 text-lg font-medium">Seed Journal Entries</h3>
+
+    <div class="mt-3">
+        <label class="text-sm font-semibold text-muted-foreground">Number of entries <span class="text-xs">Max
+                50*</span>
+        </label>
+        <InputNumber @bind-Value="seedCount" min="1" max="50"
+            class="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
+        @* <p></p> *@
+    </div>
+
+    <button class="mt-4" type="button" disabled="@isSeeding" @onclick="SeedJournalEntries">
+        <AppButton>
+            @(isSeeding ? "Seeding..." : "Seed")
+        </AppButton>
+    </button>
+</div>
+
+@code {
+    bool isSeeding;
+    int seedCount = 20;
+
+    async Task SeedJournalEntries()
+    {
+        if (isSeeding) return;
+
+        isSeeding = true;
+        try
+        {
+            seedCount = Math.Clamp(seedCount, 1, 50);
+            await DatabaseService.SeedJournalEntriesAsync(seedCount);
+            ToastService.Show($"Seeded {seedCount} journal entries.", ToastType.Success);
+        }
+        catch
+        {
+            ToastService.Show("Failed to seed journal entries.", ToastType.Error);
+        }
+        finally
+        {
+            isSeeding = false;
+        }
+    }
+}

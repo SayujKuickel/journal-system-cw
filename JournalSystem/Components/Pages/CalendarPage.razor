@@ -5,7 +5,7 @@
 @inject NavigationManager Nav
 @using Microsoft.JSInterop
 
-<div class="space-y-4">
+<div class="space-y-6">
     <h1 class="text-4xl font-bold"> Calendar </h1>
 
     <div id="calendar"></div>
@@ -45,7 +45,7 @@
                 {
                     items.AddRange(streakData.MissedDays.Select(el => new
                     {
-                        id = "missed_" + el.ToString("yyyyMMdd"),
+                        id = "" + el.ToString("yyyyMMdd"),
                         title = "Missed",
                         start = el.ToString("yyyy-MM-dd"),
                         end = el.ToString("yyyy-MM-dd"),

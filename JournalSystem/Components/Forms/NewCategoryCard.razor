@@ -1,0 +1,40 @@
+@inject ICategoryService CategoryService
+@inject ToastService ToastService
+
+<div class="p-4 border bg-card border-border rounded-lg">
+    <h3 class="mb-3 text-lg font-medium">New Category</h3>
+    <EditForm Model="model" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+
+        <label class="text-sm font-semibold text-muted-foreground">Category Name*</label>
+        <InputText
+            class="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            @bind-Value="model.Name" />
+        <ValidationMessage class="text-sm text-destructive" For="@(() => model.Name)" />
+
+        <button class="mt-4" type="submit">
+            <AppButton>
+                Create
+            </AppButton>
+        </button>
+    </EditForm>
+</div>
+
+@code {
+    AddItemFormModel model = new();
+
+    async Task HandleSubmit()
+    {
+        var success = await CategoryService.CreateCategoryAsync(model.Name);
+
+        if (success)
+        {
+            model = new();
+            ToastService.Show("Category created successfully", ToastType.Success);
+        }
+        else
+        {
+            ToastService.Show("Category already exists", ToastType.Error);
+        }
+    }
+}

@@ -27,16 +27,19 @@
             <div class="space-y-3">
                 <InputText placeholder="Username" @bind-Value="formModel.Username"
                     class="w-full rounded-lg border border-input px-4 py-2 sm:w-sm text-foreground placeholder-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-shadow" />
+                <ValidationMessage class="text-sm text-destructive" For="@(() => formModel.Username)" />
 
                 <InputText type="password" placeholder="PIN" @bind-Value="formModel.Pin"
                     class="w-full rounded-lg border border-input px-4 py-2 sm:w-sm text-foreground placeholder-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-shadow" />
+                <ValidationMessage class="text-sm text-destructive" For="@(() => formModel.Pin)" />
 
                 <InputText type="password" placeholder="Confirm PIN" @bind-Value="formModel.ConfirmPin"
                     class="w-full rounded-lg border border-input px-4 py-2 sm:w-sm text-foreground placeholder-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-shadow" />
+                <ValidationMessage class="text-sm text-destructive" For="@(() => formModel.ConfirmPin)" />
 
                 @if (!string.IsNullOrEmpty(Error))
                 {
-                    <p class="text-sm text-destructive-foreground">@Error</p>
+                    <p class="text-sm text-destructive">@Error</p>
                 }
             </div>
 
@@ -54,12 +57,15 @@
     public class RegisterFormModel
     {
         [Required]
+        [StringLength(50, MinimumLength = 4)]
         public string Username { get; set; } = string.Empty;
 
         [Required]
+        [StringLength(4, MinimumLength = 4)]
         public string Pin { get; set; } = string.Empty;
 
         [Required]
+        [StringLength(4, MinimumLength = 4)]
         public string ConfirmPin { get; set; } = string.Empty;
     }
 

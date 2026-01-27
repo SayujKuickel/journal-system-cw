@@ -1,8 +1,6 @@
 using JournalSystem.Models;
 using SQLite;
 using SQLitePCL;
-using Windows.Web.UI;
-
 
 namespace JournalSystem.Services;
 
@@ -10,7 +8,8 @@ public sealed class DatabaseService
 {
     private static SQLiteAsyncConnection? _db;
     private static readonly SemaphoreSlim _lock = new(1, 1);
-    private const string DB_NAME = "journal-system-abcde.db";
+    private static readonly SemaphoreSlim _seedLock = new(1, 1);
+    private const string DB_NAME = "final-journal-system-1.db";
 
     public static async Task<SQLiteAsyncConnection> GetConnectionAsync()
     {
@@ -54,125 +53,144 @@ public sealed class DatabaseService
 
     private static async Task SeedDataAsync(SQLiteAsyncConnection conn)
     {
-        #region  Mood Seed
         if (await conn.Table<Mood>().CountAsync() == 0)
         {
-
             var moods = new[]
             {
-            ("Happy", Mood.MoodType.Positive),
-            ("Excited", Mood.MoodType.Positive),
-            ("Relaxed", Mood.MoodType.Positive),
-            ("Grateful", Mood.MoodType.Positive),
-            ("Confident", Mood.MoodType.Positive),
-            ("Calm", Mood.MoodType.Neutral),
-            ("Thoughtful", Mood.MoodType.Neutral),
-            ("Curious", Mood.MoodType.Neutral),
-            ("Nostalgic", Mood.MoodType.Neutral),
-            ("Bored", Mood.MoodType.Neutral),
-            ("Sad", Mood.MoodType.Negative),
-            ("Angry", Mood.MoodType.Negative),
-            ("Stressed", Mood.MoodType.Negative),
-            ("Lonely", Mood.MoodType.Negative),
-            ("Anxious", Mood.MoodType.Negative),
-        };
+                ("Happy", Mood.MoodType.Positive),
+                ("Excited", Mood.MoodType.Positive),
+                ("Relaxed", Mood.MoodType.Positive),
+                ("Grateful", Mood.MoodType.Positive),
+                ("Confident", Mood.MoodType.Positive),
+                ("Calm", Mood.MoodType.Neutral),
+                ("Thoughtful", Mood.MoodType.Neutral),
+                ("Curious", Mood.MoodType.Neutral),
+                ("Nostalgic", Mood.MoodType.Neutral),
+                ("Bored", Mood.MoodType.Neutral),
+                ("Sad", Mood.MoodType.Negative),
+                ("Angry", Mood.MoodType.Negative),
+                ("Stressed", Mood.MoodType.Negative),
+                ("Lonely", Mood.MoodType.Negative),
+                ("Anxious", Mood.MoodType.Negative),
+            };
 
             foreach (var (name, type) in moods)
             {
-                await conn.InsertAsync(new Mood
-                {
-                    Name = name,
-                    Type = type
-                });
+                await conn.InsertAsync(new Mood { Name = name, Type = type });
             }
         }
-        #endregion
 
-        #region  Tag Seed
         if (await conn.Table<Tag>().CountAsync() == 0)
         {
-
-            var tags = new List<string> { "Work", "Career", "Studies", "Family", "Friends", "Relationships", "Health", "Fitness", "Personal Growth", "Self-care", "Hobbies", "Travel", "Nature", "Finance", "Spirituality", "Birthday", "Holiday", "Vacation", "Celebration", "Exercise", "Reading", "Writing", "Cooking", "Meditation", "Yoga", "Music", "Shopping", "Parenting", "Projects", "Planning", "Reflection" };
+            var tags = new List<string>
+            {
+                "Work","Career","Studies","Family","Friends","Relationships","Health","Fitness",
+                "Personal Growth","Self-care","Hobbies","Travel","Nature","Finance","Spirituality",
+                "Birthday","Holiday","Vacation","Celebration","Exercise","Reading","Writing","Cooking",
+                "Meditation","Yoga","Music","Shopping","Parenting","Projects","Planning","Reflection"
+            };
 
             foreach (var tag in tags)
-            {
-                await conn.InsertAsync(
-                    new Tag() { Name = tag }
-                );
-            }
+                await conn.InsertAsync(new Tag { Name = tag });
         }
-        #endregion
-
-
-        #region  Category Seed
 
         if (await conn.Table<Category>().CountAsync() == 0)
         {
-            List<string> categories = new() { "Work", "Health", "Travel", "Personal", "Education", "Finance", "Hobbies", "Relationships", "Spirituality", "Fitness", "Self-Care", "Social Life", "Career Development", "Projects", "Creativity", "Home & Family", "Wellness", "Leisure", "Events", "Goals & Planning" };
+            List<string> categories = new()
+            {
+                "Work","Health","Travel","Personal","Education","Finance","Hobbies","Relationships",
+                "Spirituality","Fitness","Self-Care","Social Life","Career Development","Projects",
+                "Creativity","Home & Family","Wellness","Leisure","Events","Goals & Planning"
+            };
 
             foreach (var category in categories)
-            {
-                await conn.InsertAsync(
-                    new Category() { Name = category }
-                );
-            }
-
+                await conn.InsertAsync(new Category { Name = category });
         }
+    }
+    public static async Task SeedJournalEntriesAsync(int count = 20)
+    {
+        if (count <= 0) return;
 
-        #endregion
+        var conn = await GetConnectionAsync();
 
-
-        #region Journal Entry Seed
-        if (await conn.Table<JournalEntry>().CountAsync() == 0)
+        await _seedLock.WaitAsync();
+        try
         {
-            var faker = new Bogus.Faker();
             var moodIds = (await conn.Table<Mood>().ToListAsync()).Select(m => m.Id).ToList();
             var categoryIds = (await conn.Table<Category>().ToListAsync()).Select(c => c.Id).ToList();
             var tagIds = (await conn.Table<Tag>().ToListAsync()).Select(t => t.Id).ToList();
 
-            var entryFaker = new Bogus.Faker<JournalEntry>()
-                .RuleFor(e => e.Id, f => Guid.NewGuid())
-                .RuleFor(e => e.EntryDate, f => f.Date.Between(DateTime.Now.AddMonths(-3), DateTime.Now.AddDays(-1)))
-                .RuleFor(e => e.Title, f => f.Lorem.Sentence(3, 5).TrimEnd('.'))
-                .RuleFor(e => e.RichText, f => $"<p>{f.Lorem.Paragraphs(4, 30)}</p>")
-                .RuleFor(e => e.PrimaryMood, f => f.PickRandom(moodIds))
-                .RuleFor(e => e.Category, f => f.PickRandom(categoryIds))
-                .RuleFor(e => e.CreatedAt, f => f.Date.Past(1))
-                .RuleFor(e => e.UpdatedAt, (f, e) => e.CreatedAt);
+            if (moodIds.Count == 0 || categoryIds.Count == 0 || tagIds.Count == 0) return;
 
-            var entries = entryFaker.Generate(75);
+            var faker = new Bogus.Faker();
+            var start = DateTime.Today.AddMonths(-1);
+            var end = DateTime.Today.AddDays(-1);
 
-            var final = entries.DistinctBy(e => e.EntryDate.Date).ToList();
-
-            foreach (var entry in final)
+            for (int i = 0; i < count; i++)
             {
-                await conn.InsertAsync(entry);
-
-                var secondaryMoodCount = faker.Random.Int(0, 2);
-                var secondaryMoods = faker.PickRandom(moodIds.Where(m => m != entry.PrimaryMood), secondaryMoodCount);
-                foreach (var moodId in secondaryMoods)
+                try
                 {
-                    await conn.InsertAsync(new JournalEntryMood
+                    var entryDate = faker.Date.Between(start, end).Date;
+                    var paragraphs = faker.Lorem.Paragraphs(4, 30)
+                        .Split('\n', StringSplitOptions.RemoveEmptyEntries);
+
+                    var richText = string.Join(
+                        "", paragraphs.Select(p => $"<p>{p.Trim()}</p>")
+                    );
+
+                    var entry = new JournalEntry
                     {
-                        JournalEntryId = entry.Id,
-                        MoodId = moodId
-                    });
+                        Id = Guid.NewGuid(),
+                        EntryDate = entryDate,
+                        Title = faker.Lorem.Sentence(3, 5).TrimEnd('.'),
+                        RichText = richText,
+                        PrimaryMood = faker.PickRandom(moodIds),
+                        Category = faker.PickRandom(categoryIds),
+                        CreatedAt = faker.Date.Past(1),
+                    };
+                    entry.UpdatedAt = entry.CreatedAt;
+
+                    await conn.InsertAsync(entry);
+
+                    var secondaryMoodCount = faker.Random.Int(0, 2);
+                    var secondaryMoods = faker.PickRandom(
+                        moodIds.Where(m => m != entry.PrimaryMood),
+                        secondaryMoodCount
+                    );
+
+                    foreach (var moodId in secondaryMoods)
+                    {
+                        await conn.InsertAsync(
+                            new JournalEntryMood
+                            {
+                                JournalEntryId = entry.Id,
+                                MoodId = moodId
+                            }
+                        );
+                    }
+
+                    var tagCount = faker.Random.Int(1, 5);
+                    var selectedTags = faker.PickRandom(tagIds, tagCount);
+                    foreach (var tagId in selectedTags)
+                    {
+                        await conn.InsertAsync(
+                            new JournalEntryTag
+                            {
+                                JournalEntryId = entry.Id,
+                                TagId = tagId
+                            }
+                        );
+                    }
                 }
-
-                var tagCount = faker.Random.Int(2, 5);
-                var selectedTags = faker.PickRandom(tagIds, tagCount);
-                foreach (var tagId in selectedTags)
+                catch
                 {
-                    await conn.InsertAsync(new JournalEntryTag
-                    {
-                        JournalEntryId = entry.Id,
-                        TagId = tagId
-                    });
                 }
             }
         }
-        #endregion
-
-
+        finally
+        {
+            _seedLock.Release();
+        }
     }
+
 }

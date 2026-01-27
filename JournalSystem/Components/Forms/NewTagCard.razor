@@ -1,0 +1,40 @@
+@inject ITagService TagService
+@inject ToastService ToastService
+
+<div class="p-4 border bg-card border-border rounded-lg">
+    <h3 class="mb-3 text-lg font-medium">New Tag</h3>
+    <EditForm Model="model" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+
+        <label class="text-sm font-semibold text-muted-foreground">Tag Name*</label>
+        <InputText
+            class="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            @bind-Value="model.Name" />
+        <ValidationMessage class="text-sm text-destructive" For="@(() => model.Name)" />
+
+        <button class="mt-4" type="submit">
+            <AppButton>
+                Create
+            </AppButton>
+        </button>
+    </EditForm>
+</div>
+
+@code {
+    AddItemFormModel model = new();
+
+    async Task HandleSubmit()
+    {
+        var success = await TagService.CreateTagAsync(model.Name);
+
+        if (success)
+        {
+            model = new();
+            ToastService.Show("Tag created successfully", ToastType.Success);
+        }
+        else
+        {
+            ToastService.Show("Tag already exists", ToastType.Error);
+        }
+    }
+}

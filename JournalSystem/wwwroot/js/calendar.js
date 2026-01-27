@@ -12,7 +12,7 @@ function initializeFullCalendar() {
     },
     events: [],
     eventClick: function (info) {
-      if (info.event.id.length > 5) {
+      if (info.event.id.length > 10) {
         window.location.href = `/view-journal/${info.event.id}`;
       }
     },

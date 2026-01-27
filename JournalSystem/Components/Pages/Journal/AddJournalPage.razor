@@ -3,7 +3,6 @@
 @using System.ComponentModel.DataAnnotations
 @using ABI.Windows.AI.MachineLearning
 
-@inject IJSRuntime JS
 @inject NavigationManager Nav
 
 @inject IJournalService JournalService
@@ -30,7 +29,7 @@
 <EditForm Model="formModel" OnValidSubmit="HandleSubmit" class="space-y-3 grid grid-cols-3 gap-4">
     <DataAnnotationsValidator />
 
-    <section class="col-span-2 space-y-4">
+    <section class="col-span-2 space-y-6">
         <div>
             <label class="text-sm font-semibold text-muted-foreground">Title*</label>
             <InputText
@@ -39,14 +38,18 @@
             <ValidationMessage class="text-sm text-destructive" For="@(() => formModel.Title)" />
         </div>
 
-        <div>
-            <label class="text-sm font-semibold text-muted-foreground">Content*</label>
-            <div id="editor" class="mt-2 rounded-lg border border-border" style="height: 32rem;"></div>
-            @if (showRichTextError)
-            {
-                <div class="text-sm text-destructive">Content is required.</div>
-            }
-        </div>
+        @if (readyToRender)
+        {
+            <div>
+                <label class="text-sm font-semibold text-muted-foreground">Content*</label>
+                <QuillEditor @ref="editor" EditorId="@editorId" Value="@pendingRichText" />
+
+                @if (showRichTextError)
+                {
+                    <div class="text-sm text-destructive">Content is required.</div>
+                }
+            </div>
+        }
     </section>
 
     <aside class="flex flex-col justify-between">
@@ -212,13 +215,16 @@
         EntryDate = DateTime.Today,
     };
 
+    QuillEditor? editor;
     bool showRichTextError = false;
+    string editorId = string.Empty;
+
 
     async Task HandleSubmit()
     {
-        var richText = await JS.InvokeAsync<string>("getQuillHtml");
+        var richText = await editor!.GetHtml() ?? string.Empty;
 
-        var plain = System.Text.RegularExpressions.Regex.Replace(richText ?? "", "<.*?>", "").Trim();
+        var plain = System.Text.RegularExpressions.Regex.Replace(richText, "<.*?>", "").Trim();
         if (string.IsNullOrWhiteSpace(plain))
         {
             showRichTextError = true;
@@ -251,11 +257,8 @@
     List<Tag> tags = [];
     List<Category> categories = [];
 
-    @* quill *@
     string? pendingRichText;
-    bool quillReady;
-
-    @*  *@
+    bool readyToRender = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -266,6 +269,8 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        readyToRender = false;
+
         formModel = new JournalFormModel
         {
             EntryDate = DateTime.Today
@@ -290,6 +295,8 @@
             formModel.ChosenTags = storedTags;
             pendingRichText = stored.RichText;
 
+            editorId = $"journal-{guid}";
+            readyToRender = true;
             return;
         }
 
@@ -297,40 +304,12 @@
         var existingEntry = await JournalService.GetItemByDateAsync(DateTime.Today);
         if (existingEntry != null)
         {
-            Nav.NavigateTo($"{SiteRoutes.AddJournal}/{existingEntry.Id}");
+            ToastService.Show("Journal Entry already exists for today!", ToastType.Info);
+            Nav.NavigateTo($"{SiteRoutes.ViewJournal}/{existingEntry.Id}");
             return;
         }
 
+        editorId = $"journal-new-{DateTime.UtcNow.Ticks}";
+        readyToRender = true;
     }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (!quillReady)
-        {
-            try
-            {
-                await JS.InvokeVoidAsync("initQuill", "editor");
-                quillReady = true;
-
-                if (!string.IsNullOrWhiteSpace(pendingRichText))
-                {
-                    await JS.InvokeVoidAsync("setQuillHtml", pendingRichText);
-                    pendingRichText = null;
-                }
-
-                return;
-            }
-            catch
-            {
-                return;
-            }
-        }
-
-        if (!string.IsNullOrWhiteSpace(pendingRichText))
-        {
-            await JS.InvokeVoidAsync("setQuillHtml", pendingRichText);
-            pendingRichText = null;
-        }
-    }
-
 }

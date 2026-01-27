@@ -33,6 +33,28 @@ namespace JournalSystem.Services
             await SecureStorage.Default.SetAsync(PASSKEY, key);
         }
 
+        public async Task ChangeKey(string oldKey, string newKey)
+        {
+            var currpass = await GetKey();
+            if (currpass == "")
+            {
+                throw new Exception("Password not set");
+            }
+
+            if (currpass != oldKey)
+            {
+                throw new Exception("Invalid password");
+            }
+
+            if (string.IsNullOrWhiteSpace(newKey))
+            {
+                throw new Exception("New password is required");
+            }
+
+            SecureStorage.Default.Remove(PASSKEY);
+            await SecureStorage.Default.SetAsync(PASSKEY, newKey);
+        }
+
         public async Task ValidatePassword(string password)
         {
             string currpass = await GetKey();

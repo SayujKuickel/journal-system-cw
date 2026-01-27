@@ -8,7 +8,7 @@
 @inject IJSRuntime JS
 @inject ToastService ToastService
 
-<div class="space-y-4">
+<div class="space-y-6">
 
     <h1 class="text-4xl font-bold">
         Journals
@@ -40,11 +40,14 @@
         </div>
 
         <div class="flex items-center gap-2">
-            <button @onclick="ExportCurrentPage">
-                <AppButton Variant="secondary">
-                    <i class="fi fi-rr-file-pdf"></i> Export All Results
-                </AppButton>
-            </button>
+            @if (entries.Count > 0)
+            {
+                <button @onclick="ExportCurrentPage">
+                    <AppButton Variant="secondary">
+                        <i class="fi fi-rr-file-pdf"></i> Export All Results
+                    </AppButton>
+                </button>
+            }
 
             <a href="@SiteRoutes.AddJournal">
                 <AppButton>

@@ -1,0 +1,30 @@
+@inject IJSRuntime JS
+
+<div id="@EditorId" style="height: 32rem;" class="rounded-lg border border-border"></div>
+
+@code {
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public string EditorId { get; set; } = default!;
+
+    bool initialized;
+    string? lastSetValue;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !initialized)
+        {
+            await JS.InvokeVoidAsync("initQuill", EditorId);
+            initialized = true;
+        }
+
+        if (initialized && !string.IsNullOrWhiteSpace(Value) && !string.Equals(Value, lastSetValue, StringComparison.Ordinal))
+        {
+            await JS.InvokeVoidAsync("setQuillHtml", Value);
+            lastSetValue = Value;
+        }
+    }
+
+    public async Task<string?> GetHtml()
+    => await JS.InvokeAsync<string?>("getQuillHtml");
+}

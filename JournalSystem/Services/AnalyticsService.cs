@@ -80,7 +80,6 @@ public class AnalyticsService : IAnalyticsService
         };
     }
 
-
     public async Task<List<TopTagsResult>> GetTopUsedTags()
     {
         var db = await Db();

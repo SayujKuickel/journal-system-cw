@@ -1,0 +1,59 @@
+@inject IPreferenceService PreferenceService
+@inject ToastService ToastService
+
+<div class="p-4 border bg-card border-border rounded-lg">
+    <h3 class="mb-3 text-lg font-medium">Profile</h3>
+    <EditForm Model="model" OnValidSubmit="UpdateName">
+        <DataAnnotationsValidator />
+
+        <label class="text-sm font-semibold text-muted-foreground">Username*</label>
+        <InputText
+            class="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            @bind-Value="model.Username" />
+        <ValidationMessage class="text-sm text-destructive" For="@(() => model.Username)" />
+
+        <button class="mt-4" type="submit" disabled="@isUpdating">
+            <AppButton>
+                @(isUpdating ? "Updating..." : "Update Name")
+            </AppButton>
+        </button>
+    </EditForm>
+</div>
+
+@code {
+    UpdateNameFormModel model = new();
+    bool isUpdating;
+
+    protected override void OnInitialized()
+    {
+        model.Username = PreferenceService.GetPreference(UserPreferences.Username);
+    }
+
+    async Task UpdateName()
+    {
+        if (isUpdating) return;
+
+        isUpdating = true;
+        try
+        {
+            var name = (model.Username ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                ToastService.Show("Name is required.", ToastType.Error);
+                return;
+            }
+
+            PreferenceService.SetPreference(UserPreferences.Username, name);
+            model.Username = name;
+            ToastService.Show("Name updated.", ToastType.Success);
+        }
+        catch
+        {
+            ToastService.Show("Failed to update name.", ToastType.Error);
+        }
+        finally
+        {
+            isUpdating = false;
+        }
+    }
+}

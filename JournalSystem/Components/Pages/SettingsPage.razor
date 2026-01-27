@@ -1,105 +1,38 @@
 @page "/settings"
-@using System.ComponentModel.DataAnnotations
+@inject NavigationManager Nav
 @inject IPreferenceService PreferenceService
 @inject IPasswordService PasswordService
-@inject ICategoryService CategoryService
-@inject ITagService TagService
 @inject ToastService ToastService
 
-
-<div class="space-y-4">
+<div class="space-y-6">
     <h1 class="text-4xl font-bold"> Settings </h1>
 
     <section class="grid grid-cols-2 gap-4">
-        <EditForm Model="newCategoryModal" OnValidSubmit="HandleCategorySubmit">
-            <DataAnnotationsValidator />
-
-            <div class="p-4 border bg-card border-border rounded-lg">
-                <h3 class="mb-3 text-lg font-medium">New Category</h3>
-                <label class="text-sm font-semibold text-muted-foreground">Category Name*</label>
-                <InputText
-                    class="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                    @bind-Value="newCategoryModal.Name" />
-                <ValidationMessage class="text-sm text-destructive-foreground" For="@(() => newCategoryModal.Name)" />
-                <button class="mt-4" type="submit">
-                    <AppButton>
-                        Submit
-                    </AppButton>
-                </button>
-            </div>
-        </EditForm>
-
-        <EditForm Model="newTagModal" OnValidSubmit="HandleTagSubmit">
-            <DataAnnotationsValidator />
-
-            <div class="p-4 border bg-card border-border rounded-lg">
-                <h3 class="mb-3 text-lg font-medium">New Tag</h3>
-                <label class="text-sm font-semibold text-muted-foreground">Tag Name*</label>
-                <InputText
-                    class="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                    @bind-Value="newTagModal.Name" />
-                <ValidationMessage class="text-sm text-destructive-foreground" For="@(() => newTagModal.Name)" />
-                <button class="mt-4" type="submit">
-                    <AppButton>
-                        Submit
-                    </AppButton>
-                </button>
-            </div>
-        </EditForm>
+        <ProfileCard />
+        <SeedJournalEntriesCard />
+        <NewCategoryCard />
+        <NewTagCard />
+        <div class="col-span-2">
+            <ResetPinCard />
+        </div>
     </section>
 </div>
 
-@code {
 
-    class AddItemFormModel
-    {
-        [Required]
-        [StringLength(50)]
-        public string Name { get; set; } = string.Empty;
-    }
-
-    AddItemFormModel newCategoryModal = new();
-    AddItemFormModel newTagModal = new();
-}
+@*
+<button class="mt-4" type="button" @onclick="TerminateUser">
+    <AppButton Variant="destructive">
+        Terminate Userp
+    </AppButton>
+</button>
 
 @code {
-    async Task HandleCategorySubmit()
-    {
-        var success = await CategoryService.CreateCategoryAsync(newCategoryModal.Name);
-
-        if (success)
-        {
-            newCategoryModal = new();
-            ToastService.Show("Category created successfully", ToastType.Success);
-        }
-        else
-        {
-            ToastService.Show("Category already exists", ToastType.Error);
-        }
-    }
-
-    async Task HandleTagSubmit()
-    {
-        var success = await TagService.CreateTagAsync(newTagModal.Name);
-
-        if (success)
-        {
-            newTagModal = new();
-            ToastService.Show("Tag created successfully", ToastType.Success);
-        }
-        else
-        {
-            ToastService.Show("Tag already exists", ToastType.Error);
-        }
-    }
-}
-
-
-@code {
-    void Terminate()
+    void TerminateUser()
     {
         PasswordService.TerminatePassword();
         PreferenceService.TerminateAllPreferences();
-        Console.WriteLine("Success");
+        ToastService.Show("Cleared username + PIN.", ToastType.Success);
+        Nav.NavigateTo(SiteRoutes.Register, true);
     }
-}
+} 
+*@

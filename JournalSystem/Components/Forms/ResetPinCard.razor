@@ -1,0 +1,87 @@
+@inject IPasswordService PasswordService
+@inject ToastService ToastService
+
+<div class="p-4 border bg-card border-border rounded-lg">
+    <h3 class="mb-3 text-lg font-medium">Reset PIN</h3>
+
+    <EditForm Model="model" OnValidSubmit="HandleSubmit" class="space-y-3">
+        <DataAnnotationsValidator />
+
+        <div>
+            <label class="text-sm font-semibold text-muted-foreground">Old PIN*</label>
+            <InputText type="password"
+                class="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                @bind-Value="model.OldPin" />
+            <ValidationMessage class="text-sm text-destructive" For="@(() => model.OldPin)" />
+        </div>
+
+        <div>
+            <label class="text-sm font-semibold text-muted-foreground">New PIN*</label>
+            <InputText type="password"
+                class="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                @bind-Value="model.NewPin" />
+            <ValidationMessage class="text-sm text-destructive" For="@(() => model.NewPin)" />
+        </div>
+
+        <div>
+            <label class="text-sm font-semibold text-muted-foreground">Confirm New PIN*</label>
+            <InputText type="password"
+                class="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                @bind-Value="model.ConfirmPin" />
+            <ValidationMessage class="text-sm text-destructive" For="@(() => model.ConfirmPin)" />
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(error))
+        {
+            <p class="text-sm text-destructive">@error</p>
+        }
+
+        <button type="submit" disabled="@isSubmitting">
+            <AppButton>
+                @(isSubmitting ? "Updating..." : "Update PIN")
+            </AppButton>
+        </button>
+    </EditForm>
+</div>
+
+@code {
+    ResetPinFormModel model = new();
+    bool isSubmitting;
+    string error = string.Empty;
+
+    async Task HandleSubmit()
+    {
+        if (isSubmitting) return;
+
+        error = string.Empty;
+
+        if (model.NewPin != model.ConfirmPin)
+        {
+            error = "PINs do not match.";
+            return;
+        }
+
+        if (model.OldPin == model.NewPin)
+        {
+            error = "New PIN must be different from old PIN.";
+            return;
+        }
+
+        isSubmitting = true;
+        try
+        {
+            await PasswordService.ChangeKey(model.OldPin, model.NewPin);
+            ToastService.Show("PIN updated.", ToastType.Success);
+            model = new();
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            ToastService.Show("Failed to update PIN.", ToastType.Error);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}
