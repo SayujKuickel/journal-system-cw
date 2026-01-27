@@ -1,10 +1,44 @@
 @page "/analytics"
 @inject IAnalyticsService AnalyticsService
+@inject ToastService ToastService
 
 <div class="space-y-6">
     <h1 class="text-4xl font-bold mb-6">
         Analytics
     </h1>
+
+
+    <EditForm Model="@Filters" OnSubmit="OnSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <section class="flex items-end justify-end gap-3">
+            <div>
+                <label class="text-sm font-semibold text-muted-foreground block">Start Date</label>
+                <input class="mt-1 w-full rounded-lg border border-input px-3 py-2 text-sm text-foreground
+                       focus:outline-none focus:ring-2 focus:ring-primary" type="date" @bind="Filters.StartDate" />
+            </div>
+
+            <div>
+                <label class="text-sm font-semibold text-muted-foreground block">End Date</label>
+                <input class="mt-1 w-full rounded-lg border border-input px-3 py-2 text-sm text-foreground
+                       focus:outline-none focus:ring-2 focus:ring-primary" type="date" @bind="Filters.EndDate" />
+            </div>
+
+            <button type="submit">
+                <AppButton>
+                    Apply
+                </AppButton>
+            </button>
+
+            <button type="button" @onclick="ClearFilters">
+                <AppButton Variant="destructive">
+                    Clear
+                </AppButton>
+            </button>
+        </section>
+    </EditForm>
+
 
     @if (isLoading)
     {
@@ -12,7 +46,7 @@
     }
     else
     {
-        <div class="grid grid-cols-3 gap-y-6 gap-x-4">
+        <section class="grid grid-cols-3 gap-y-6 gap-x-4">
             @if (streakData.LongestCount > 0)
             {
                 <AnalyticsCard Title="Longest Streak" Value="@streakData.LongestCount.ToString()" Icon="fi fi-rr-flame"
@@ -22,54 +56,77 @@
             @if (streakData.CurrentCount > 0)
             {
                 <AnalyticsCard Title="Current Streak" Value="@streakData.CurrentCount.ToString()"
-                    Icon="fi fi-rr-fire-flame-curved" Subtext="@($"{streakData.CurrentStart:MMM dd, yyyy} to today")" />
+                    Icon="fi fi-rr-fire-flame-curved" Subtext="@($"{streakData.CurrentStart:MMM dd, yyyy}")" />
             }
 
             @if (topTags.Any())
             {
                 <AnalyticsCard Title="Top Tag" Value="@topTags[0].Tag.Name" Icon="fi fi-rr-tags"
-                    Subtext="@($"Used {@topTags[0].Count.ToString()} times.")" />
+                    Subtext="@($"Used {topTags[0].Count} times.")" />
             }
 
             @if (categoryBreakdown.Any())
             {
                 <AnalyticsCard Title="Top Category" Value="@categoryBreakdown[0].CategoryName" Icon="fi fi-rr-bookmark"
-                    Subtext="@($"Used {categoryBreakdown[0].Count.ToString()} times - {Math.Clamp(categoryBreakdown[0].Percentage, 0, 100):0.##}%")" />
+                    Subtext="@($"Used {categoryBreakdown[0].Count} times - {Math.Clamp(categoryBreakdown[0].Percentage, 0, 100):0.##}%")" />
             }
 
-            @if (topWords.Any())
+            @if (streakData.MissedDays.Count > 0)
             {
-                <AnalyticsCard Title="Top Word" Value="@topWords[0].Name" Icon="fi fi-rr-text"
-                    Subtext="@($"Used {topWords[0].WordCount} times.")" />
+                <AnalyticsCard Title="Missed Days" Value="@streakData.MissedDays.Count.ToString()" Icon="fi fi-rr-house-day"
+                    Subtext="Number of days missed." />
             }
+        </section>
 
-            <AnalyticsCard Title="Missed Days" Value="@streakData.MissedDays.Count.ToString()" Icon="fi fi-rr-house-day"
-                Subtext="Number of days missed." />
-        </div>
-
-        <div class="grid grid-cols-6 gap-8">
-
+        <section class="grid grid-cols-6 gap-y-6 gap-x-4">
             <div class="col-span-2">
                 <h2 class="text-2xl font-semibold mb-2">Mood Distribution</h2>
-                <MoodDistributionChart Distribution="moodDistributionResult" />
+                @if (moodDistributionResult.Total > 0)
+                {
+                    <MoodDistributionChart Distribution="moodDistributionResult" />
+                }
+                else
+                {
+                    <p class="text-sm text-muted-foreground">No data for selected range.</p>
+                }
             </div>
 
             <div class="col-span-4">
                 <h2 class="text-2xl font-semibold mb-2">Top Tags</h2>
-                <TopTagsChart Tags="topTags" />
+                @if (topTags.Any())
+                {
+                    <TopTagsChart Tags="topTags" />
+                }
+                else
+                {
+                    <p class="text-sm text-muted-foreground">No data for selected range.</p>
+                }
             </div>
 
-            <div class="col-span-4 max-h-96">
+            <div class="col-span-6 max-h-96">
                 <h2 class="text-2xl font-semibold mb-2">Percentage of Journal Per Category</h2>
-                <CategoryBreakdownChart CategoryBreakdown="categoryBreakdown" />
+                @if (categoryBreakdown.Any())
+                {
+                    <CategoryBreakdownChart CategoryBreakdown="categoryBreakdown" />
+                }
+                else
+                {
+                    <p class="text-sm text-muted-foreground">No data for selected range.</p>
+                }
             </div>
 
-            <div class="col-span-2 max-h-96">
-                <h2 class="text-2xl font-semibold mb-2">Most Used Words</h2>
-                <TopWordsChart Words="topWords" />
+            <div class="col-span-6 max-h-96">
+                <h2 class="text-2xl font-semibold mb-2">Word Trend</h2>
+                @if (wordTrends.Any())
+                {
+                    <WordTrendChart Trends="wordTrends" />
+                }
+                else
+                {
+                    <p class="text-sm text-muted-foreground">No data for selected range.</p>
+                }
             </div>
-
-        </div>
+        </section>
     }
 </div>
 
@@ -80,15 +137,66 @@
     List<TopTagsResult> topTags = [];
     List<CategoryBreakdownResult> categoryBreakdown = [];
     StreakSummary streakData = new();
-    List<WordCountResult> topWords = [];
+    List<WordTrendResult> wordTrends = [];
+
+    AnalyticsFilters Filters = new();
 
     protected override async Task OnInitializedAsync()
     {
-        moodDistributionResult = await AnalyticsService.GetMoodDistributionStats();
-        topTags = await AnalyticsService.GetTopUsedTags();
-        categoryBreakdown = await AnalyticsService.GetCategoryBreakdown();
-        streakData = await AnalyticsService.GetStreaksAsync();
-        topWords = await AnalyticsService.GetTopWordsAsync(10);
+        Filters.StartDate = DateTime.Today.AddDays(-30);
+        Filters.EndDate = DateTime.Today;
+
+        Normalize();
+        await LoadData();
+    }
+
+    private async Task OnSubmit()
+    {
+        if (Filters.StartDate > Filters.EndDate)
+        {
+            ToastService.Show(
+            "Start date cannot be later than end date.",
+            ToastType.Error
+            );
+            return;
+        }
+
+        Normalize();
+        await LoadData();
+    }
+
+
+    private void Normalize()
+    {
+        if (Filters.StartDate.HasValue)
+            Filters.StartDate = Filters.StartDate.Value.Date;
+
+        if (Filters.EndDate.HasValue)
+            Filters.EndDate = Filters.EndDate.Value.Date;
+    }
+
+    private async Task ClearFilters()
+    {
+        Filters.StartDate = DateTime.Today.AddDays(-30);
+        Filters.EndDate = DateTime.Today;
+
+        Normalize();
+        await LoadData();
+    }
+
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        moodDistributionResult = await AnalyticsService.GetMoodDistributionStats(Filters.StartDate, Filters.EndDate);
+        topTags = await AnalyticsService.GetTopUsedTags(Filters.StartDate, Filters.EndDate);
+        categoryBreakdown = await AnalyticsService.GetCategoryBreakdown(Filters.StartDate, Filters.EndDate);
+        streakData = await AnalyticsService.GetStreaksAsync(Filters.StartDate, Filters.EndDate);
+        wordTrends = await AnalyticsService.GetWordTrendsAsync(Filters.StartDate, Filters.EndDate);
+
         isLoading = false;
+        StateHasChanged();
     }
 }

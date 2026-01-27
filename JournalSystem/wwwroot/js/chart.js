@@ -1,6 +1,10 @@
 function initPieChart(id, label, labels, data) {
   const ctx = document.getElementById(id);
   const barColors = generateGradientColors(labels.length);
+  const existingChart = Chart.getChart(ctx);
+  if (existingChart) {
+    existingChart.destroy();
+  }
 
   new Chart(ctx, {
     type: "pie",
@@ -49,6 +53,10 @@ function initBarChart(id, label, labels, data) {
   const ctx = document.getElementById(id);
 
   const barColors = generateGradientColors(labels.length);
+  const existingChart = Chart.getChart(ctx);
+  if (existingChart) {
+    existingChart.destroy();
+  }
 
   new Chart(ctx, {
     type: "bar",

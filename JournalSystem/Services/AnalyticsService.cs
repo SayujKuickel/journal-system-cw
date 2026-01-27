@@ -17,26 +17,46 @@ public class AnalyticsService : IAnalyticsService
     private static readonly Regex WordRegex =
         new(@"[\p{L}\p{Nd}]+", RegexOptions.CultureInvariant);
 
-    readonly JournalService journalService;
-
-    public AnalyticsService()
+    private async Task<List<JournalEntry>> GetEntriesDateRangeAsync(DateTime? startDate, DateTime? endDate)
     {
-        journalService = new();
+        var db = await Db();
+
+        var q = db.Table<JournalEntry>();
+
+        if (startDate.HasValue)
+        {
+            var start = startDate.Value.Date;
+            q = q.Where(e => e.EntryDate >= start);
+        }
+
+        if (endDate.HasValue)
+        {
+            var endExclusive = endDate.Value.Date.AddDays(1);
+            q = q.Where(e => e.EntryDate < endExclusive);
+        }
+
+        return await q.ToListAsync();
     }
 
-    public async Task<MoodDistributionResult> GetMoodDistributionStats()
+
+    public async Task<MoodDistributionResult> GetMoodDistributionStats(DateTime? startDate = null, DateTime? endDate = null)
     {
-        // Fetch all entries
-        List<JournalEntry> entries = await journalService.GetAllItems();
+        var entries = await GetEntriesDateRangeAsync(startDate, endDate);
         if (entries.Count == 0)
         {
             Console.WriteLine("No journal entries found.");
             return new MoodDistributionResult();
         }
 
-        // Fetch all moods
         var db = await Db();
         var allMoods = await db.Table<Mood>().ToListAsync();
+
+        var entryIdSet = entries.Select(e => e.Id).ToHashSet();
+        var secondaryMoods = await db.Table<JournalEntryMood>().ToListAsync();
+        var secondaryMoodsByEntry = secondaryMoods
+            .Where(m => entryIdSet.Contains(m.JournalEntryId))
+            .GroupBy(m => m.JournalEntryId)
+            .ToDictionary(g => g.Key, g => g.Select(x => x.MoodId).ToList());
 
         int PositiveCount = 0;
         int NeutralCount = 0;
@@ -55,7 +75,8 @@ public class AnalyticsService : IAnalyticsService
                 }
             }
 
-            var secondaryMoodIds = await journalService.GetSecondaryMoodsAsync(entry.Id);
+            if (!secondaryMoodsByEntry.TryGetValue(entry.Id, out var secondaryMoodIds)) continue;
+
             foreach (var smId in secondaryMoodIds)
             {
                 var mood = allMoods.Find(m => m.Id == smId);
@@ -80,13 +101,25 @@ public class AnalyticsService : IAnalyticsService
         };
     }
 
-    public async Task<List<TopTagsResult>> GetTopUsedTags()
+    public async Task<List<TopTagsResult>> GetTopUsedTags(DateTime? startDate = null, DateTime? endDate = null)
     {
         var db = await Db();
 
         var usage = await db.Table<JournalEntryTag>().ToListAsync();
         if (usage.Count == 0)
             return [];
+
+        if (startDate.HasValue || endDate.HasValue)
+        {
+            var entries = await GetEntriesDateRangeAsync(startDate, endDate);
+            if (entries.Count == 0)
+                return [];
+
+            var entryIdSet = entries.Select(e => e.Id).ToHashSet();
+            usage = usage.Where(u => entryIdSet.Contains(u.JournalEntryId)).ToList();
+            if (usage.Count == 0)
+                return [];
+        }
 
         var grouped = usage
             .GroupBy(t => t.TagId)
@@ -106,23 +139,32 @@ public class AnalyticsService : IAnalyticsService
             .ToList();
     }
 
-    public async Task<List<CategoryBreakdownResult>> GetCategoryBreakdown()
+    public async Task<List<CategoryBreakdownResult>> GetCategoryBreakdown(DateTime? startDate = null, DateTime? endDate = null)
     {
         var db = await Db();
 
-        var totalCount = await db.Table<JournalEntry>().CountAsync();
-        if (totalCount == 0)
-            return new List<CategoryBreakdownResult>();
+        var entries = await GetEntriesDateRangeAsync(startDate, endDate);
+        if (entries.Count == 0)
+            return [];
 
-        var sql = @"
-        SELECT c.Name AS CategoryName, COUNT(*) AS Count
-        FROM JournalEntry e
-        JOIN Category c ON e.Category = c.Id
-        GROUP BY c.Id
-        ORDER BY Count DESC
-    ";
+        var categories = await db.Table<Category>().ToListAsync();
+        var categoryNameById = categories.ToDictionary(c => c.Id, c => c.Name);
 
-        var counts = await db.QueryAsync<CategoryBreakdownResult>(sql);
+        var totalCount = entries.Count;
+
+        var counts = entries
+            .GroupBy(e => e.Category)
+            .Select(g =>
+            {
+                categoryNameById.TryGetValue(g.Key, out var name);
+                return new CategoryBreakdownResult
+                {
+                    CategoryName = name ?? "Unknown",
+                    Count = g.Count()
+                };
+            })
+            .OrderByDescending(x => x.Count)
+            .ToList();
 
         foreach (var item in counts)
         {
@@ -133,10 +175,9 @@ public class AnalyticsService : IAnalyticsService
     }
 
 
-    public async Task<StreakSummary> GetStreaksAsync()
+    public async Task<StreakSummary> GetStreaksAsync(DateTime? startDate = null, DateTime? endDate = null)
     {
-        var db = await Db();
-        var entries = await db.Table<JournalEntry>().ToListAsync();
+        var entries = await GetEntriesDateRangeAsync(startDate, endDate);
 
         var dates = entries
             .Select(e => e.EntryDate.Date)
@@ -150,6 +191,9 @@ public class AnalyticsService : IAnalyticsService
                 MissedDays = new List<DateTime>()
             };
 
+        var rangeStart = startDate ?? dates.First();
+        var rangeEnd = endDate ?? dates.Last();
+
         int longestCount = 1;
         DateTime longestStart = dates[0];
         DateTime longestEnd = dates[0];
@@ -158,6 +202,9 @@ public class AnalyticsService : IAnalyticsService
         DateTime tempStart = dates[0];
 
         var missedDays = new List<DateTime>();
+
+        for (var d = rangeStart.Date; d < dates[0].Date; d = d.AddDays(1))
+            missedDays.Add(d);
 
         for (int i = 1; i < dates.Count; i++)
         {
@@ -186,14 +233,17 @@ public class AnalyticsService : IAnalyticsService
             }
         }
 
+        for (var d = dates[^1].Date.AddDays(1); d <= rangeEnd.Date; d = d.AddDays(1))
+            missedDays.Add(d);
+
         int currentCount = 0;
         DateTime? currentEnd = null;
         DateTime? currentStart = null;
-        var today = DateTime.Today;
+        var effectiveEnd = endDate ?? DateTime.Today;
 
         for (int i = dates.Count - 1; i >= 0; i--)
         {
-            var diff = (today - dates[i]).Days;
+            var diff = (effectiveEnd.Date - dates[i]).Days;
 
             if (diff == currentCount || (currentCount == 0 && diff == 1))
             {
@@ -219,39 +269,66 @@ public class AnalyticsService : IAnalyticsService
         };
     }
 
-    public async Task<List<WordCountResult>> GetTopWordsAsync(int top = 10)
+    public async Task<List<WordTrendResult>> GetWordTrendsAsync(DateTime? startDate = null, DateTime? endDate = null)
     {
-        var safeTop = Math.Clamp(top, 1, 100);
-
-        var db = await Db();
-        var entries = await db.Table<JournalEntry>().ToListAsync();
-        if (entries.Count == 0) return [];
-
-        var frequencies = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var entry in entries)
-        {
-            var plainText = ExtractPlainTextFromHtml(entry.RichText);
-            if (plainText.Length == 0)
-                continue;
-
-            foreach (Match match in WordRegex.Matches(plainText))
-            {
-                var word = match.Value.ToLowerInvariant();
-
-                if (!frequencies.TryAdd(word, 1))
-                    frequencies[word]++;
-            }
-        }
-
-        if (frequencies.Count == 0)
+        var entries = await GetEntriesDateRangeAsync(startDate, endDate);
+        if (entries.Count == 0)
             return [];
 
-        return frequencies
-            .OrderByDescending(el => el.Value)
-            .ThenBy(el => el.Key, StringComparer.OrdinalIgnoreCase)
-            .Take(safeTop)
-            .Select(el => new WordCountResult { Name = el.Key, WordCount = el.Value })
+        return entries
+            .OrderBy(e => e.EntryDate)
+            .Select(e =>
+            {
+                var plainText = ExtractPlainTextFromHtml(e.RichText);
+                if (plainText.Length == 0)
+                {
+                    return new WordTrendResult
+                    {
+                        EntryId = e.Id,
+                        Title = e.Title ?? "",
+                        EntryDate = e.EntryDate.Date,
+                        WordCount = 0,
+                        TopWord = "",
+                        TopWordCount = 0
+                    };
+                }
+
+                var wordCount = 0;
+                var frequencies = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (Match match in WordRegex.Matches(plainText))
+                {
+                    var word = match.Value.ToLowerInvariant();
+                    wordCount++;
+
+                    if (!frequencies.TryAdd(word, 1))
+                        frequencies[word]++;
+                }
+
+                var topWord = "";
+                var topWordCount = 0;
+
+                if (frequencies.Count > 0)
+                {
+                    var top = frequencies
+                        .OrderByDescending(kvp => kvp.Value)
+                        .ThenBy(kvp => kvp.Key, StringComparer.OrdinalIgnoreCase)
+                        .First();
+
+                    topWord = top.Key;
+                    topWordCount = top.Value;
+                }
+
+                return new WordTrendResult
+                {
+                    EntryId = e.Id,
+                    Title = e.Title ?? "",
+                    EntryDate = e.EntryDate.Date,
+                    WordCount = wordCount,
+                    TopWord = topWord,
+                    TopWordCount = topWordCount
+                };
+            })
             .ToList();
     }
 

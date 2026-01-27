@@ -9,7 +9,7 @@ public sealed class DatabaseService
     private static SQLiteAsyncConnection? _db;
     private static readonly SemaphoreSlim _lock = new(1, 1);
     private static readonly SemaphoreSlim _seedLock = new(1, 1);
-    private const string DB_NAME = "final-journal-system-1.db";
+    private const string DB_NAME = "final-journal-system-2.db";
 
     public static async Task<SQLiteAsyncConnection> GetConnectionAsync()
     {

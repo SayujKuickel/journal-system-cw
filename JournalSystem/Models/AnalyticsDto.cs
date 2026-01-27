@@ -40,3 +40,12 @@ public sealed class StreakSummary
     public List<DateTime> MissedDays { get; init; } = new();
 }
 
+public sealed class WordTrendResult
+{
+    public Guid EntryId { get; init; }
+    public string Title { get; init; } = "";
+    public DateTime EntryDate { get; init; }
+    public int WordCount { get; init; }
+    public string TopWord { get; init; } = "";
+    public int TopWordCount { get; init; }
+}

@@ -8,19 +8,14 @@
     [Parameter]
     public List<CategoryBreakdownResult> CategoryBreakdown { get; set; } = new();
 
-    bool chartRendered;
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (chartRendered || CategoryBreakdown == null || !CategoryBreakdown.Any())
-        {
+        if (CategoryBreakdown == null || !CategoryBreakdown.Any())
             return;
-        }
 
         var labels = CategoryBreakdown.Select(c => c.CategoryName).ToArray();
         var data = CategoryBreakdown.Select(c => c.Percentage).ToArray();
 
         await JS.InvokeVoidAsync("initBarChart", "breakdown-chart", "Category Breakdown", labels, data);
-        chartRendered = true;
     }
 }

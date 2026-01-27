@@ -1,0 +1,22 @@
+@using System.Linq
+@using JournalSystem.Models
+@inject IJSRuntime JS
+
+<canvas id="word-trend" width="100%" height="400" class="w-full max-h-96"></canvas>
+
+@code {
+    [Parameter]
+    public List<WordTrendResult> Trends { get; set; } = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Trends == null || !Trends.Any())
+            return;
+
+        var ordered = Trends.OrderBy(t => t.EntryDate).ToList();
+        var labels = ordered.Select(t => t.EntryDate.ToString("yyyy-MM-dd")).ToArray();
+        var data = ordered.Select(t => t.WordCount).ToArray();
+
+        await JS.InvokeVoidAsync("initBarChart", "word-trend", "Words per Entry", labels, data);
+    }
+}

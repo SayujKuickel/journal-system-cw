@@ -8,19 +8,14 @@
     [Parameter]
     public List<TopTagsResult> Tags { get; set; } = new();
 
-    bool chartRendered;
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (chartRendered || Tags == null || !Tags.Any())
-        {
+        if (Tags == null || !Tags.Any())
             return;
-        }
 
         var labels = Tags.Select(t => t.Tag.Name).ToArray();
         var data = Tags.Select(t => t.Count).ToArray();
 
         await JS.InvokeVoidAsync("initBarChart", "top-tags", "Most Used Tags", labels, data);
-        chartRendered = true;
     }
 }
