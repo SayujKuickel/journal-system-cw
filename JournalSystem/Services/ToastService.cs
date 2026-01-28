@@ -6,6 +6,7 @@ public class ToastService
 {
     public event Action<ToastMessage>? OnShow;
 
+    // show toast message
     public void Show(string message, ToastType type)
         => OnShow?.Invoke(new ToastMessage(message, type));
 }

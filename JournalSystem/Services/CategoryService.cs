@@ -20,7 +20,7 @@ public class CategoryService : ICategoryService
 
         return await db.Table<Category>().ToListAsync();
     }
-
+    // create 
     public async Task<bool> CreateCategoryAsync(string name)
     {
         var db = await Db();

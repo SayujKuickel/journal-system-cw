@@ -8,6 +8,7 @@ public class TagService : ITagService
     private async Task<SQLiteAsyncConnection> Db()
         => await DatabaseService.GetConnectionAsync();
 
+    // get tag
     public async Task<List<Tag>> GetItemsAsync()
     {
         var db = await Db();
@@ -15,6 +16,7 @@ public class TagService : ITagService
         return await db.Table<Tag>().ToListAsync();
     }
 
+    // get tag with id
     public async Task<Tag> GetItemAsync(int id)
     {
         var db = await Db();
@@ -22,6 +24,7 @@ public class TagService : ITagService
         return await db.Table<Tag>().FirstOrDefaultAsync(e => e.Id == id);
     }
 
+    // create new tag
     public async Task<bool> CreateTagAsync(string name)
     {
         if (string.IsNullOrWhiteSpace(name))

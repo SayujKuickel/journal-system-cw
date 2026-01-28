@@ -8,6 +8,7 @@ public class JournalExportService : IJournalExportService
     private async Task<SQLiteAsyncConnection> Db()
         => await DatabaseService.GetConnectionAsync();
 
+    // build journal export data
     public async Task<List<JournalExportDto>> BuildJournalExport(IEnumerable<Guid> entryIds)
     {
         var ids = entryIds.Distinct().ToList();
@@ -35,6 +36,7 @@ public class JournalExportService : IJournalExportService
             .Where(m => ids.Contains(m.JournalEntryId))
             .ToListAsync();
 
+        // exports entries in a array for js
         return entries.Select(e => new JournalExportDto
         {
             Title = e.Title,

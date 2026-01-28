@@ -54,13 +54,13 @@
         if (isSubmitting) return;
 
         error = string.Empty;
-
+        // check if new and confirm pin mathch
         if (model.NewPin != model.ConfirmPin)
         {
             error = "PINs do not match.";
             return;
         }
-
+        // checks pin is different from old
         if (model.OldPin == model.NewPin)
         {
             error = "New PIN must be different from old PIN.";
@@ -70,12 +70,14 @@
         isSubmitting = true;
         try
         {
+			// attempt to change pin
             await PasswordService.ChangeKey(model.OldPin, model.NewPin);
             ToastService.Show("PIN updated.", ToastType.Success);
             model = new();
         }
         catch (Exception ex)
         {
+			// show error message to user
             error = ex.Message;
             ToastService.Show("Failed to update PIN.", ToastType.Error);
         }

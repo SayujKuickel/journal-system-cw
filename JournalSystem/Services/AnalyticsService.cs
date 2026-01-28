@@ -17,25 +17,28 @@ public class AnalyticsService : IAnalyticsService
     private static readonly Regex WordRegex =
         new(@"[\p{L}\p{Nd}]+", RegexOptions.CultureInvariant);
 
+    // internal method to handle date range filtering.
     private async Task<List<JournalEntry>> GetEntriesDateRangeAsync(DateTime? startDate, DateTime? endDate)
     {
         var db = await Db();
+        // query the journal entry table
+        var query = db.Table<JournalEntry>();
 
-        var q = db.Table<JournalEntry>();
-
+        // filter by start date
         if (startDate.HasValue)
         {
             var start = startDate.Value.Date;
-            q = q.Where(e => e.EntryDate >= start);
+            query = query.Where(e => e.EntryDate >= start);
         }
-
+        // filter by end date    
         if (endDate.HasValue)
         {
             var endExclusive = endDate.Value.Date.AddDays(1);
-            q = q.Where(e => e.EntryDate < endExclusive);
+            query = query.Where(e => e.EntryDate < endExclusive);
         }
 
-        return await q.ToListAsync();
+        // returns data in sepcified date range
+        return await query.ToListAsync();
     }
 
 
@@ -142,16 +145,19 @@ public class AnalyticsService : IAnalyticsService
     public async Task<List<CategoryBreakdownResult>> GetCategoryBreakdown(DateTime? startDate = null, DateTime? endDate = null)
     {
         var db = await Db();
-
+        // get journal entries in the date range
         var entries = await GetEntriesDateRangeAsync(startDate, endDate);
         if (entries.Count == 0)
             return [];
 
+        // fetch all categories
         var categories = await db.Table<Category>().ToListAsync();
+        // create dictionary {id: name}
         var categoryNameById = categories.ToDictionary(c => c.Id, c => c.Name);
 
         var totalCount = entries.Count;
 
+        // group entries by category and count
         var counts = entries
             .GroupBy(e => e.Category)
             .Select(g =>
@@ -166,11 +172,12 @@ public class AnalyticsService : IAnalyticsService
             .OrderByDescending(x => x.Count)
             .ToList();
 
+        // calculate percentage
         foreach (var item in counts)
         {
             item.Percentage = (double)item.Count / totalCount * 100;
         }
-
+        // returns data
         return counts.ToList();
     }
 

@@ -146,8 +146,6 @@
         isPopoverShown = false;
         filters.Page = 1;
         await LoadData(1);
-
-
     }
 
     async Task ClearFilters()
@@ -157,7 +155,6 @@
         filters = new();
         await LoadData(1);
         ToastService.Show("Filters Cleared successfully!", ToastType.Success);
-
     }
 
     async Task ExportCurrentPage()
@@ -166,13 +163,9 @@
             return;
 
         var ids = entries.OrderByDescending(e => e.EntryDate).Select(e => e.Id);
-        var exportDtos = await JournalExportService
-        .BuildJournalExport(ids);
+        var exportDtos = await JournalExportService.BuildJournalExport(ids);
 
-        await JS.InvokeVoidAsync(
-        "exportJournalsToPdf",
-        exportDtos
-        );
+        await JS.InvokeVoidAsync("exportJournalsToPdf", exportDtos);
         ToastService.Show($"{ids.Count()} items exported successfully!", ToastType.Success);
     }
 }

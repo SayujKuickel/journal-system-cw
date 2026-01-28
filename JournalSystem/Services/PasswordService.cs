@@ -11,17 +11,18 @@ namespace JournalSystem.Services
 
         private const string PASSKEY = "user_password";
 
+        // retrieves the stored key
         public async Task<string> GetKey()
         {
             return await SecureStorage.Default.GetAsync(PASSKEY) ?? "";
         }
-
+        // checks if user has a key set.
         public async Task<bool> HasKey()
         {
             string currpass = await GetKey();
             return currpass != "";
         }
-
+        // setting key (iniitial)
         public async Task SetKey(string key)
         {
             string currpass = await GetKey();
@@ -33,6 +34,7 @@ namespace JournalSystem.Services
             await SecureStorage.Default.SetAsync(PASSKEY, key);
         }
 
+        // service to change existing password
         public async Task ChangeKey(string oldKey, string newKey)
         {
             var currpass = await GetKey();
@@ -55,6 +57,7 @@ namespace JournalSystem.Services
             await SecureStorage.Default.SetAsync(PASSKEY, newKey);
         }
 
+        // check user password against stored password
         public async Task ValidatePassword(string password)
         {
             string currpass = await GetKey();

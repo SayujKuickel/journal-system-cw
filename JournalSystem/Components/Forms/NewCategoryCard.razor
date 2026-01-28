@@ -23,12 +23,14 @@
 @code {
     AddItemFormModel model = new();
 
+	// handle create operation for category
     async Task HandleSubmit()
     {
         var success = await CategoryService.CreateCategoryAsync(model.Name);
 
         if (success)
         {
+            // clear category on success
             model = new();
             ToastService.Show("Category created successfully", ToastType.Success);
         }

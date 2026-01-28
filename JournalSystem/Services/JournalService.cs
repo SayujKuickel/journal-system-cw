@@ -194,9 +194,10 @@ public class JournalService : IJournalService
 
         foreach (var mood in existingMoods)
         {
+            // deleting all existing moods
             await db.DeleteAsync(mood);
         }
-
+        // inserting new moods
         foreach (var moodId in formData.ChosenMoods.Skip(1))
         {
             await db.InsertAsync(new JournalEntryMood
@@ -210,12 +211,13 @@ public class JournalService : IJournalService
         var existingTags = await db.Table<JournalEntryTag>()
             .Where(t => t.JournalEntryId == id)
             .ToListAsync();
-
+        // delete tags
         foreach (var tag in existingTags)
         {
             await db.DeleteAsync(tag);
         }
 
+        // update tags
         foreach (var tagId in formData.ChosenTags)
         {
             await db.InsertAsync(new JournalEntryTag
@@ -225,7 +227,6 @@ public class JournalService : IJournalService
             });
         }
     }
-
 
 
     public async Task<List<int>> GetSecondaryMoodsAsync(Guid id)
